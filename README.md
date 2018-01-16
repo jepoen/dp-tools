@@ -33,3 +33,15 @@ handleTess -f
 ```
 
 Ergebnis steht in `$OCRDIR/out`, Seiten werden von 001 bis nnn neu numeriert.
+
+## renumber
+
+Neunumerieren von Dateien. Für die Dateinamen mit gleicher Erweiterung werden
+in alphabetischer Reihenfolge symbolische Links 001 bis nnn erzeugt und
+die Erweiterung wieder angehängt.
+
+Aufruf:
+
+```shell
+renumber extension target_directory
+```

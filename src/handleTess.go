@@ -24,8 +24,6 @@ type log_t struct {
 
 var log log_t
 
-const RM_LINE = "@@@@@@@@@@@@@@@@@@@"
-
 const (
   FONT_NONE = iota
   FONT_ANTIQUA
@@ -89,13 +87,21 @@ func joinLines(text stringlist_t) stringlist_t {
       text[i+1] = nline[pos+1:]
     } else {
       text[i] = line[0:pLast+noRemove]+nline
-      text[i+1] = RM_LINE
+      text[i+1] = ""
     }
     //fmt.Println("after:", text[i], "||", text[i+1])
   }
   ntext := make([]string, 0, len(text))
+  prevBlank := false
   for _, line := range text {
-    if line != RM_LINE { ntext = append(ntext, line) }
+    line = strings.Trim(line, " \t")
+    if line == "" {
+      if prevBlank { continue }
+      prevBlank = true
+    } else {
+      prevBlank = false
+    }
+    ntext = append(ntext, line)
   }
   return ntext
 }

@@ -45,3 +45,14 @@ Aufruf:
 ```shell
 renumber extension target_directory
 ```
+
+## topng.py
+
+Umwandlung der Scantailor-Tiff-Images in verkleinerte PNG-Dateien. Verwendet
+`convert` (ImageMagick) und `pngcrush`.
+
+Aufruf:
+
+```shell
+python topng.py tifDir pngDir [scale]
+```

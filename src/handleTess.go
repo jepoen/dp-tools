@@ -30,6 +30,12 @@ const (
   FONT_FRAKTUR
 )
 
+const (
+  OPT_FONT = iota
+  OPT_JOIN
+  OPT_RAW
+)
+
 func NewLog() log_t {
   var log log_t
   log.replacements = make(map[string]wordcount_t)
@@ -91,6 +97,13 @@ func joinLines(text stringlist_t) stringlist_t {
     }
     //fmt.Println("after:", text[i], "||", text[i+1])
   }
+  return text
+}
+
+/**
+ * Remove repeated blank lines
+ */
+func removeBlankLines(text stringlist_t) stringlist_t {
   ntext := make([]string, 0, len(text))
   prevBlank := false
   for _, line := range text {
@@ -269,7 +282,7 @@ func replaceRune(r rune) string {
   return repl[r]
 }
 
-func prepare(infile string, outfile string, font int) {
+func prepare(infile string, outfile string, opts map[int]int) {
   fi, err := os.Open(infile)
   if err != nil {
     fmt.Println(err)
@@ -298,10 +311,17 @@ func prepare(infile string, outfile string, font int) {
     text = append(text, string(runes))
     //fmt.Println(text)
   }
-  text = joinLines(text)
+  if opts[OPT_JOIN] != 0 {
+    text = joinLines(text)
+  }
+  text = removeBlankLines(text)
   newText := make(stringlist_t, 0, len(text))
   for _, line := range text {
-    newText = append(newText, handleWords(line, font))
+    if opts[OPT_RAW] == 0 {
+      newText = append(newText, handleWords(line, opts[OPT_FONT]))
+    } else {
+      newText = append(newText, line)
+    }
   }
   // Write file
   fo, err := os.Create(outfile)
@@ -322,7 +342,7 @@ func prepare(infile string, outfile string, font int) {
   }
 }
 
-func handleFiles(font int) {
+func handleFiles(opts map[int]int) {
   filelist, err := ioutil.ReadDir("in")
   if err != nil {
     fmt.Println(err)
@@ -341,7 +361,7 @@ func handleFiles(font int) {
     i++
     outfile := filepath.Join("out", fmt.Sprintf("%03d.txt", i))
     fmt.Println("Handle", infile, outfile)
-    prepare(infile, outfile, font)
+    prepare(infile, outfile, opts)
   }
 }
 
@@ -361,27 +381,36 @@ func printLog() {
   fmt.Printf("Sum of replacements: %d\n", sum)
 }
 
-func getFont(args []string) int {
-  if len(args) == 0 { return FONT_NONE }
-  if args[0] == "-f" { return FONT_FRAKTUR }
-  if args[0] == "-a" { return FONT_ANTIQUA }
-  return FONT_NONE
+func getOpt(args []string) map[int]int {
+  opts := map[int]int{OPT_FONT: FONT_NONE, OPT_JOIN: 1, OPT_RAW: 0}
+  for _, arg := range(args) {
+     switch arg {
+       case "-f": opts[OPT_FONT] = FONT_FRAKTUR
+       case "-a": opts[OPT_FONT] = FONT_ANTIQUA
+       case "-j": opts[OPT_JOIN] = 0
+       case "+r": opts[OPT_RAW] = 1
+     }
+  }
+  if opts[OPT_RAW] == 1 { opts[OPT_JOIN] = 0 }
+  return opts
 }
 
 func usage(cmd string) {
   fmt.Printf("Usage: %s flag\n", cmd)
   fmt.Println("Flags: -f -- Fraktur")
   fmt.Println("       -a -- Antiqua")
+  fmt.Println("       -j -- Don't join words")
+  fmt.Println("       +r -- Raw text (convert only Unicode chars)")
 }
 
 func main() {
   args := os.Args[1:]
-  font := getFont(args)
-  if font == FONT_NONE {
+  opts := getOpt(args)
+  if opts[OPT_FONT] == FONT_NONE && opts[OPT_RAW] == 0 {
     usage(os.Args[0])
     os.Exit(1)
   }
   log = NewLog()
-  handleFiles(font)
+  handleFiles(opts)
   printLog()
 }

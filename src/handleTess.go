@@ -97,7 +97,7 @@ func (q Quartiles) String() string {
 }
 
 func writeParams() {
-  b, err := json.Marshal(params)
+  b, err := json.MarshalIndent(params, "", "  ")
   if err != nil {
     logger.Fatal(err)
   }
@@ -606,6 +606,28 @@ func handleWords(line string, font int) string {
   return newLine
 }
 
+func handleLine(line string, font int) string {
+  nl := line
+  patterns := [][]string{
+    {`^ \.\.\.`, `...`},
+  }
+  frakPatterns := [][]string{
+    {` f\.`, ` s.`},
+  }
+  for _, entry := range(patterns) {
+    re := regexp.MustCompile(entry[0])
+    nl = re.ReplaceAllString(nl, entry[1])
+  }
+  for _, entry := range(frakPatterns) {
+    re := regexp.MustCompile(entry[0])
+    nl = re.ReplaceAllString(nl, entry[1])
+  }
+  if nl != line {
+    LogAddReplacement(line, nl)
+  }
+  return nl
+}
+
 func replaceRune(r rune) string {
   repl := map[rune]string {
     '“': "«",
@@ -650,10 +672,10 @@ func prepare(lines []string, opts map[int]int) []string {
   newText := make(stringlist_t, 0, len(text))
   for _, line := range text {
     if opts[OPT_RAW] == 0 {
-      newText = append(newText, handleWords(line, opts[OPT_FONT]))
-    } else {
-      newText = append(newText, line)
+      line = handleWords(line, opts[OPT_FONT])
+      line = handleLine(line, opts[OPT_FONT])
     }
+    newText = append(newText, line)
   }
   return newText
 }

@@ -188,16 +188,15 @@ func (boxLine *BoxLine) handle_space() {
       res = append(res, box)
       continue
     }
-    logger.Printf("handle_space %d %v\n", idx, boxLine.boxes[idx])
+    //logger.Printf("handle_space %d %v\n", idx, boxLine.boxes[idx])
     bSpace := boxLine.boxes[idx]
     wSpace := bSpace.x1 - bSpace.x0
     if wSpace < 0 { wSpace = boxLine.wSpace.max }
-    logger.Printf("Space after s %d median %d\n", wSpace,
-      boxLine.wSpace.med)
     if float64(wSpace) > params.Nospace_ratio*float64(boxLine.wSpace.med) {
       res = append(res, box)
     } else {
-      logger.Println("Space removed")
+      logger.Printf("Space after s %d median %d removed\n", wSpace,
+        boxLine.wSpace.med)
     }
   }
   boxLine.boxes = res
@@ -210,17 +209,11 @@ func (boxLine *BoxLine) handle_s() {
       res = append(res, box)
       continue
     }
-    if !isWordEnd(boxLine.boxes, idx) {
-      res = append(res, box)
-      continue
-    }
     w := box.wGlyph()
     h := box.hGlyph()
     ratio := float64(h)/float64(w)
-    nextGlyph := "¶"
-    if idx < len(boxLine.boxes)-1 { nextGlyph = boxLine.boxes[idx+1].glyph }
-    logger.Printf("handle s: pos: %d w %d h %d r %.1f thr %.1f next: %s\n",
-      idx, w, h, ratio, params.Longs_ratio, nextGlyph)
+    logger.Printf("handle s: pos: %d w %d h %d r %.1f thr %.1f\n",
+      idx, w, h, ratio, params.Longs_ratio)
     if ratio < params.Longs_ratio {
       res = append(res, box)
       continue

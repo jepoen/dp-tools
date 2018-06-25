@@ -79,7 +79,7 @@ const (
 )
 
 func init() {
-  logFile, err := os.Create("handleBox.log")
+  logFile, err := os.Create("handleTess.log")
   if err != nil {
     logger = log.New(os.Stderr, "", 0)
     logger.Printf("Cannot open logfile: %s\n", err)
@@ -727,9 +727,11 @@ func printSummary() {
   for _, k := range keys {
     v := summary.replacements[k]
     fmt.Printf("%s -> %s (%d)\n", k, v.word, v.count)
+    logger.Printf("%s -> %s (%d)\n", k, v.word, v.count)
     sum += v.count
   }
   fmt.Printf("Sum of replacements: %d\n", sum)
+  logger.Printf("Sum of replacements: %d\n", sum)
 }
 
 func getOpt(args []string) map[int]int {

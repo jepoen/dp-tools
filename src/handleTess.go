@@ -202,6 +202,22 @@ func (boxLine *BoxLine) handle_space() {
   boxLine.boxes = res
 }
 
+func (boxLine *BoxLine) handleSlimLetter() {
+  slimLetters := map[string]bool{"s": true, "l": true, "i": true}
+  res := []Box{}
+  for _, box := range(boxLine.boxes) {
+    if _, ok := slimLetters[box.glyph]; ok {
+      w := box.wGlyph()
+      h := box.hGlyph()
+      ratio := float64(h)/float64(w)
+      if ratio < params.Longs_ratio {
+        res = append(res, box)
+      }
+    }
+  }
+  boxLine.boxes = res
+}
+
 func (boxLine *BoxLine) handle_s() {
   res := []Box{}
   for idx, box := range(boxLine.boxes) {
@@ -218,12 +234,14 @@ func (boxLine *BoxLine) handle_s() {
       res = append(res, box)
       continue
     }
+    /* in handleSlimLetter()
     // long ſ or speckle
     if float64(h) < params.S_speckle_hratio * float64(boxLine.hLetter.med) {
       // speckle
       logger.Println("Speckle removed")
       continue
     }
+    */
     if isWordEnd(boxLine.boxes, idx) {
       logger.Println("ſ -> f")
       box.glyph = "f"
@@ -361,6 +379,7 @@ func processBoxes(lines []string, boxes []Box) []string {
     oldText := boxes2text(boxLine.boxes)
     logger.Println("-", oldText)
     boxLine.handle_space()
+    boxLine.handleSlimLetter()
     boxLine.handle_s()
     newText := boxes2text(boxLine.boxes)
     if oldText != newText {

@@ -207,13 +207,19 @@ func (boxLine *BoxLine) handleSlimLetter() {
   res := []Box{}
   for _, box := range(boxLine.boxes) {
     if _, ok := slimLetters[box.glyph]; ok {
-      w := box.wGlyph()
       h := box.hGlyph()
-      ratio := float64(h)/float64(w)
-      if ratio < params.Longs_ratio {
-        res = append(res, box)
+      // Speckle
+      if float64(h) < params.S_speckle_hratio * float64(boxLine.hLetter.med) {
+        continue
       }
     }
+    res = append(res, box)
+  }
+  oldText := boxes2text(boxLine.boxes)
+  newText := boxes2text(res)
+  if oldText != newText {
+    logger.Printf("handle slim letters:\n- %s\n+ %s",
+      oldText, newText)
   }
   boxLine.boxes = res
 }

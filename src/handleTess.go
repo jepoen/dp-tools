@@ -18,12 +18,13 @@ import (
 )
 
 type Params struct {
-  Longs_ratio float64        // h/w > long_ratio: ſ -> f at word end
-  S_speckle_hratio float64   // h < s_speckle_ratio * median(hLetter) -> remove
+  Longs_ratio float64       // h/w > long_ratio: ſ -> f at word end
+  Low_letter_ratio float64  // h < Low_letter_ratio * median(hmLetter) -> lower
+  S_speckle_hratio float64  // h < s_speckle_ratio * median(hLetter) -> remove
   Nospace_ratio float64      // space < nospace_ratio * median(wSpace) ->remove
 }
 
-var params Params = Params{ 2.0, 0.2, 0.3 }
+var params Params = Params{ 2.0, 1.1, 0.2, 0.3 }
 
 type Quartiles struct {
   min int
@@ -45,6 +46,7 @@ type BoxLine struct {
   boxes []Box
   wLetter Quartiles
   hLetter Quartiles
+  hmLetter Quartiles
   wSpace Quartiles
   wOther Quartiles
   hOther Quartiles
@@ -89,6 +91,14 @@ func init() {
   }
   logger.Println("Logger started")
   summary = NewSummary()
+}
+
+func str2map(s string) map[rune]bool {
+  res := map[rune]bool{}
+  for _, r := range(s) {
+    res[r] = true
+  }
+  return res
 }
 
 func (q Quartiles) String() string {
@@ -145,8 +155,10 @@ func intQuartiles (vals []int) Quartiles {
 }
 
 func newBoxLine(boxes []Box) BoxLine {
+  mLetters := str2map("acemnoruvw")
   wLetter := []int{}
   hLetter := []int{}
+  hmLetter := []int{}
   wOther := []int{}
   hOther := []int{}
   wSpace := []int{}
@@ -161,6 +173,9 @@ func newBoxLine(boxes []Box) BoxLine {
         wOther = append(wOther, w)
         hOther = append(hOther, h)
       }
+      if _, ok := mLetters[r]; ok {
+        hmLetter = append(hmLetter, h)
+      }
     } else if box.glyph == " " && idx > 0 && idx < len(boxes)-1 {
       boxes[idx].x0 = boxes[idx-1].x1
       boxes[idx].x1 = boxes[idx+1].x0
@@ -171,6 +186,7 @@ func newBoxLine(boxes []Box) BoxLine {
     }
   }
   return BoxLine{boxes, intQuartiles(wLetter), intQuartiles(hLetter),
+    intQuartiles(hmLetter),
     intQuartiles(wSpace), intQuartiles(wOther), intQuartiles(hOther)}
 }
 
@@ -203,10 +219,11 @@ func (boxLine *BoxLine) handle_space() {
 }
 
 func (boxLine *BoxLine) handleSlimLetter() {
-  slimLetters := map[string]bool{"s": true, "l": true, "i": true}
+  slimLetters := str2map("sli")
   res := []Box{}
   for _, box := range(boxLine.boxes) {
-    if _, ok := slimLetters[box.glyph]; ok {
+    r, _ := utf8.DecodeRuneInString(box.glyph)
+    if _, ok := slimLetters[r]; ok {
       h := box.hGlyph()
       // Speckle
       if float64(h) < params.S_speckle_hratio * float64(boxLine.hLetter.med) {
@@ -219,6 +236,29 @@ func (boxLine *BoxLine) handleSlimLetter() {
   newText := boxes2text(res)
   if oldText != newText {
     logger.Printf("handle slim letters:\n- %s\n+ %s",
+      oldText, newText)
+  }
+  boxLine.boxes = res
+}
+
+func (boxLine *BoxLine) fixLower(letters string) {
+  fixLetters := str2map(letters)
+  res := []Box{}
+  for _, box := range(boxLine.boxes) {
+    r, _ := utf8.DecodeRuneInString(box.glyph)
+    if _, ok := fixLetters[r]; ok {
+      h := box.hGlyph()
+      // should be lower case
+      if float64(h) < params.Low_letter_ratio * float64(boxLine.hmLetter.med) {
+        box.glyph = string(unicode.ToLower(r))
+      }
+    }
+    res = append(res, box)
+  }
+  oldText := boxes2text(boxLine.boxes)
+  newText := boxes2text(res)
+  if oldText != newText {
+    logger.Printf("fixLower:\n- %s\n+ %s",
       oldText, newText)
   }
   boxLine.boxes = res
@@ -343,8 +383,9 @@ func boxes2lines(boxes []Box) []BoxLine {
   }
   for _, boxes := range(res) {
     logger.Println(boxes2text(boxes.boxes))
-    logger.Println("wLetter: ", boxes.wLetter,
-      "  hLetter: ", boxes.hLetter)
+    logger.Println("wLetter: ", boxes.wLetter)
+    logger.Println("hLetter: ", boxes.hLetter)
+    logger.Println("hmLetter: ", boxes.hmLetter)
     logger.Println("wSpace: ", boxes.wSpace)
     logger.Println("wOther: ", boxes.wOther,
       "  hOther: ", boxes.hOther)
@@ -386,6 +427,7 @@ func processBoxes(lines []string, boxes []Box) []string {
     logger.Println("-", oldText)
     boxLine.handle_space()
     boxLine.handleSlimLetter()
+    boxLine.fixLower("SVOZ0M")
     boxLine.handle_s()
     newText := boxes2text(boxLine.boxes)
     if oldText != newText {

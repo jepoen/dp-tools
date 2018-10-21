@@ -1,0 +1,69 @@
+import os.path
+import subprocess, sys
+
+def countTextFiles(dirName):
+  pg = 1
+  while True:
+    fileName = "{:03d}.txt".format(pg)
+    fileName = os.path.join(dirName, fileName)
+    if not os.path.exists(fileName):
+      pg -= 1
+      break
+    pg += 1
+  return pg
+
+def pageFiles(dirName, pageCount):
+  res = dict()
+  noPageFiles = list()
+  patterns = dict()
+  for i in range(pageCount):
+    patterns["{:03d}".format(i+1)] = True
+  for fileName in os.listdir(dirName):
+    name, ext = os.path.splitext(fileName)
+    if name in patterns:
+      val = res.setdefault(name, list())
+      val.append(fileName)
+      res[name] = val
+    else:
+      noPageFiles.append(fileName)
+  return res, noPageFiles
+
+def zipFiles(prefix, part, files):
+  zipName = "{}-{:02d}.zip".format(prefix, part)
+  cmd = ['zip', '-j', '-9', zipName]
+  cmd.extend(files)
+  print(cmd)
+  subprocess.call(cmd)
+  
+def zipRange(prefix, dirName, size, pageFiles, extraFiles):
+  part = 0
+  files = list()
+  for f in extraFiles:
+    files.append(os.path.join(dirName, f))
+  count = len(pageFiles)
+  for i in range(1, count+1):
+    baseName = "{:03d}".format(i)
+    for f in pageFiles[baseName]:
+      files.append(os.path.join(dirName, f))
+    if i % size == 0:
+      part += 1
+      zipFiles(prefix, part, files)
+      files = list()
+  if count % size != 0:
+    part += 1   
+    zipFiles(prefix, part, files)
+
+def split(prefix, dirName, size):
+  count = countTextFiles(dirName)
+  pages, extras = pageFiles(dirName, count)
+  zipRange(prefix, dirName, size, pages, extras)
+
+def usage(cmd):
+  print("Usage: {} zipPrefix uploadDir chunkSize".format(cmd))
+
+if __name__ == '__main__':
+  if len(sys.argv) != 4:
+    usage(sys.argv[0])
+    sys.exit(1)
+  else:
+    split(sys.argv[1], sys.argv[2], int(sys.argv[3]))

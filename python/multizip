@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 import os.path
-import subprocess, sys
+import sys, zipfile
 
 def countTextFiles(dirName):
   pg = 1
@@ -28,30 +29,29 @@ def pageFiles(dirName, pageCount):
       noPageFiles.append(fileName)
   return res, noPageFiles
 
-def zipFiles(prefix, part, files):
+def zipFiles(prefix, part, dirName, files):
   zipName = "{}-{:02d}.zip".format(prefix, part)
-  cmd = ['zip', '-j', '-9', zipName]
-  cmd.extend(files)
-  print(cmd)
-  subprocess.call(cmd)
+  zf = zipfile.ZipFile(zipName, 'w', zipfile.ZIP_DEFLATED, True)
+  for f in files:
+    fileName = os.path.join(dirName, f)
+    zf.write(fileName, f)
+  zf.close()
   
 def zipRange(prefix, dirName, size, pageFiles, extraFiles):
   part = 0
-  files = list()
-  for f in extraFiles:
-    files.append(os.path.join(dirName, f))
+  files = list(extraFiles)
   count = len(pageFiles)
   for i in range(1, count+1):
     baseName = "{:03d}".format(i)
     for f in pageFiles[baseName]:
-      files.append(os.path.join(dirName, f))
+      files.append(f)
     if i % size == 0:
       part += 1
-      zipFiles(prefix, part, files)
-      files = list()
+      zipFiles(prefix, part, dirName, files)
+      files.clear()
   if count % size != 0:
     part += 1   
-    zipFiles(prefix, part, files)
+    zipFiles(prefix, part, dirName, files)
 
 def split(prefix, dirName, size):
   count = countTextFiles(dirName)

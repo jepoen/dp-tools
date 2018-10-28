@@ -1,0 +1,18 @@
+p.drop {
+    text-indent: 0;
+}
+
+p.drop:first-letter {
+    float: left; 
+    margin: 0.15em 0.1em 0em 0em;
+    font-size: 250%;
+    line-height:0.85em;
+}
+
+@media handheld {
+    p.drop:first-letter {
+	float: none; 
+	margin: 0;
+	font-size: 100%;
+    }
+}

@@ -18,7 +18,7 @@ private:
     QTextCharFormat myWordFormat;
     QTextCharFormat myLongSFormat;
     QTextCharFormat myGapFormat;
-    enum {C_OTHER, C_LETTER, C_NUMBER, C_UNKNOWN_WORD};
+    QTextCharFormat mySFormat;
 
     bool isUnusualGap(const QString& text) const;
 
@@ -44,6 +44,7 @@ public:
 
     void readFile(const QString& fileName);
     void writeFile(const QString& fileName);
+    QChar currentChar() const;
 
 signals:
     void lineChanged(const QRect&);

@@ -1,7 +1,6 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
-#include <QStringLiteral>
 #include <QtDebug>
 
 #include "frakturhandler.h"
@@ -13,10 +12,11 @@ BlockHighlighter::BlockHighlighter(Dictionary *dict, QTextDocument *parent):
     QSyntaxHighlighter(parent),
     myDict(dict)
 {
-    myGapExp = QRegularExpression(QStringLiteral("^ |[.!?,;:] $"));
+    myGapExp = QRegularExpression("^ |[.!?,;:] $");
     myWordFormat.setForeground(Qt::red);
     myLongSFormat.setForeground(Qt::magenta);
     myGapFormat.setBackground(Qt::yellow);
+    mySFormat.setForeground(Qt::blue);
 }
 
 void BlockHighlighter::highlightBlock(const QString &text) {
@@ -38,7 +38,11 @@ void BlockHighlighter::highlightBlock(const QString &text) {
             }
         }
     }
-
+    for (int i = 0; i < text.size()-1; i++) {
+        if (text[i] == 's' && text[i+1].isLetter()) {
+            setFormat(i, 1, mySFormat);
+        }
+    }
 }
 
 bool BlockHighlighter::isUnusualGap(const QString &text) const {
@@ -86,8 +90,10 @@ void LineboxEdit::readFile(const QString &baseName) {
         }
     }
     fi.close();
+    qDebug()<<myLines.size();
     if (firstPass) handleFrac();
-    setText(myLines.join("\n"));
+    qDebug()<<myLines.join("\n");
+    setPlainText(myLines.join("\n"));
     myCurrentLine = -1;
     textCursor().setPosition(0);
 }
@@ -123,4 +129,8 @@ void LineboxEdit::handleFrac() {
         newLines.append(newLine);
     }
     myLines = newLines;
+}
+
+QChar LineboxEdit::currentChar() const {
+    return toPlainText().at(textCursor().position());
 }

@@ -6,6 +6,7 @@
 #include "lineboxedit.h"
 #include "page.h"
 
+// evt. paket qt5-image-formats-plugins erforderlich
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -14,7 +15,6 @@ MainWindow::MainWindow(QWidget *parent)
     myFilesWidget = new QListWidget();
     myEdit = new LineboxEdit(myDict);
     myPage = new Page();
-    connect(myEdit, SIGNAL(lineChanged(const QRect&)), myPage, SLOT(changeLineBox(const QRect&)));
     setCentralWidget(splitter);
     splitter->addWidget(myFilesWidget);
     splitter->addWidget(myEdit);
@@ -22,8 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
     splitter->setSizes(QList<int>()<<400<<1200<<600);
     createActions();
     createMenu();
-    showPage("015");
     resize(1400,800);
+    readDir(".");
+    qDebug()<<QImageReader::supportedImageFormats();
 }
 
 MainWindow::~MainWindow()
@@ -32,21 +33,33 @@ MainWindow::~MainWindow()
 
 void MainWindow::createActions() {
     openAction = new QAction(tr("Open Dir ..."), this);
+    openAction->setShortcut(QKeySequence::Open);
     connect(openAction, SIGNAL(triggered()), this, SLOT(open()));
+    saveAction = new QAction(tr("Save"), this);
+    saveAction->setShortcut(QKeySequence::Save);
+    connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
     connect(myFilesWidget, SIGNAL(itemClicked(QListWidgetItem *)), this, SLOT(openFileItem(QListWidgetItem*)));
+    connect(myEdit, SIGNAL(lineChanged(const QRect&)), myPage, SLOT(changeLineBox(const QRect&)));
+    connect(myEdit, SIGNAL(cursorPositionChanged()), this, SLOT(changeEditPos()));
 }
 
 void MainWindow::createMenu() {
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(openAction);
+    fileMenu->addAction(saveAction);
 }
 
 void MainWindow::showPage(const QString &baseName) {
     //QString boxFileName = baseName+".box";
+    myCurrentFile = baseName;
+    qDebug()<<"showPage "<<baseName;
     QString pixFileName = baseName+".tif";
-    QPixmap pixmap(pixFileName);
+    if (QFileInfo::exists(pixFileName)) {
+        QPixmap pixmap(pixFileName);
     // set page first
-    myPage->setPage(pixmap);
+        qDebug()<<"pixmap "<<pixFileName<<" "<<pixmap.size();
+        myPage->setPage(pixmap);
+    }
     myEdit->readFile(baseName);
 }
 
@@ -58,7 +71,7 @@ void MainWindow::open() {
 }
 
 void MainWindow::save() {
-
+    myEdit->writeFile(myCurrentFile+".box");
 }
 
 void MainWindow::readDir(const QString &dirName) {
@@ -69,6 +82,9 @@ void MainWindow::readDir(const QString &dirName) {
     for (const QString& fileName: fileNames) {
         myFilesWidget->addItem(new QListWidgetItem(fileName));
     }
+    if (myFilesWidget->count() > 0) {
+        openFileItem(myFilesWidget->item(0));
+    }
 }
 
 void MainWindow::openFileItem(QListWidgetItem *item) {
@@ -76,4 +92,9 @@ void MainWindow::openFileItem(QListWidgetItem *item) {
     QString baseName = QFileInfo(fileName).baseName();
     QString filePath = QDir(myCurrentDir).absoluteFilePath(baseName);
     showPage(filePath);
+}
+
+void MainWindow::changeEditPos() {
+    QChar currentChar = myEdit->currentChar();
+    qDebug()<<currentChar;
 }

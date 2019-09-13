@@ -13,7 +13,7 @@ private:
 public:
     Page();
     void setLineBox(const QRect& linebox) { myLineBox = linebox; repaint();}
-    void setPage(const QPixmap& page) { myPage = page; myLineBox = QRect(); repaint();}
+    void setPage(const QPixmap& page) { myPage = page; repaint();}
 protected:
     void paintEvent(QPaintEvent *event) override;
 public slots:

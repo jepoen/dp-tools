@@ -13,6 +13,8 @@ private:
     TextClassifier myClassifier;
     QString handleSch(QString line) const;
     QString handleI(QString line) const;
+    QString handleStartS(QString line) const;
+    QString handleQ(QString line) const;
 public:
     FrakturHandler();
     QString handle(QString line) const;

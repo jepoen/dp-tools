@@ -1,11 +1,10 @@
-#include <QStringLiteral>
 #include <QtDebug>
 
 #include "frakturhandler.h"
 
 FrakturHandler::FrakturHandler() {
-    schExpr = QRegularExpression(QStringLiteral("^[fs]ch|[fs]ch$"));
-    schaftExpr = QRegularExpression(QStringLiteral("[fs]chaft$"));
+    schExpr = QRegularExpression("^[fs]ch|[fs]ch$");
+    schaftExpr = QRegularExpression("[fs]chaft$");
 }
 
 QString FrakturHandler::handle(QString line) const {
@@ -19,6 +18,7 @@ QString FrakturHandler::handle(QString line) const {
             qDebug()<<"sch "<<word;
             word = handleI(word);
             qDebug()<<"I "<<word;
+            word = handleStartS(word);
         }
         newLine.append(word);
     }
@@ -41,5 +41,18 @@ QString FrakturHandler::handleI(QString line) const {
 QString FrakturHandler::handleSch(QString line) const {
     line.replace(schExpr, QStringLiteral("ſch"));
     line.replace(schaftExpr, QStringLiteral("ſchaft"));
+    return line;
+}
+
+QString FrakturHandler::handleStartS(QString line) const {
+    if (line[0] == 's') {
+        qDebug()<<line;
+        line[0] = QString("ſ").at(0);
+    }
+    if (line.size() > 1 && line[0] == 'f') {
+        if (line[1] == 't' || line[1] == 'p') {
+            line[0] = QString("ſ").at(0);
+        }
+    }
     return line;
 }

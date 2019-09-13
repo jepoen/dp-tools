@@ -21,6 +21,7 @@ private:
     QAction *openAction;
     QAction *saveAction;
     QString myCurrentDir;
+    QString myCurrentFile;
     void createActions();
     void createMenu();
     void showPage(const QString& baseName);
@@ -34,5 +35,6 @@ public slots:
     void save();
 private slots:
     void openFileItem(QListWidgetItem *);
+    void changeEditPos();
 };
 #endif // MAINWINDOW_H

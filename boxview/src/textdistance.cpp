@@ -88,7 +88,7 @@ void TextDistance::restorePath(int x, int y) {
 
 bool TextDistance::isCharEqual(int x) const {
     if (myYstring.isEmpty()) return true;
-    qDebug()<<"isEqual "<<x;
+    //qDebug()<<"isEqual "<<x;
     for (const Entry& entry: myPath) {
         int entryX = entry.pos/myYsize;
         if (entryX == x+1 && entry.equal) {

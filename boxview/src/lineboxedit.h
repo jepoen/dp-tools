@@ -21,7 +21,7 @@ private:
     QTextCharFormat myWordFormat;
     QTextCharFormat myLongSFormat;
     QTextCharFormat myGapFormat;
-    QTextCharFormat mySFormat;
+    QTextCharFormat myDistanceFormat;
 
     bool isUnusualGap(const QString& text) const;
 
@@ -43,6 +43,7 @@ private:
     Dictionary *myDict;
     TextDistance *myDist;
     int myCurrentLine;
+    QString handleProofedLine(QString line);
     void handleFrac();
 public:
     LineboxEdit(Dictionary *dict, QWidget *parent=nullptr);

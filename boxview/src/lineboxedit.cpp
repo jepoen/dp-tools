@@ -1,5 +1,7 @@
 #include <QFile>
 #include <QFileInfo>
+#include <QProgressDialog>
+#include <QMessageBox>
 #include <QTextStream>
 #include <QtDebug>
 #include <cassert>
@@ -16,10 +18,10 @@ BlockHighlighter::BlockHighlighter(LineboxEdit *editor, Dictionary *dict, QTextD
     myDict(dict)
 {
     myGapExp = QRegularExpression("^ |[.!?,;:] $");
-    myWordFormat.setForeground(Qt::red);
+    myWordFormat.setForeground(Qt::magenta);
     myLongSFormat.setForeground(Qt::magenta);
     myGapFormat.setBackground(Qt::yellow);
-    mySFormat.setForeground(Qt::blue);
+    myDistanceFormat.setForeground(Qt::red);
 }
 
 void BlockHighlighter::highlightBlock(const QString &text) {
@@ -48,7 +50,7 @@ void BlockHighlighter::highlightBlock(const QString &text) {
     qDebug()<<"levenshtein highlight"<<dist;
     for (int i = 0; i < text.size(); i++) {
         if (!dist->isCharEqual(startPos+i)) {
-            setFormat(i, 1, mySFormat);
+            setFormat(i, 1, myDistanceFormat);
         }
     }
 }
@@ -109,6 +111,7 @@ void LineboxEdit::readFile(const QString &baseName) {
         QStringList proofedLines;
         while (!in.atEnd()) {
             QString line = in.readLine();
+            line = handleProofedLine(line);
             proofedLines.append(line);
         }
         fi.close();
@@ -165,12 +168,18 @@ void LineboxEdit::handleFrac() {
     myLines = newLines;
 }
 
+QString LineboxEdit::handleProofedLine(QString line) {
+    line.replace("--", "—");
+    return line;
+}
+
 QChar LineboxEdit::currentChar() const {
     return document()->characterAt(textCursor().position());
 }
 
 void LineboxEdit::updateDist() {
     qDebug()<<"update dist";
+    //QProgressDialog msg("Compute distance", "Distance", 0, 100, this);
     int dist = myDist->distance(document()->toPlainText());
     qDebug()<<dist;
     myHighlighter->rehighlight();

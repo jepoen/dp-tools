@@ -2,11 +2,13 @@
 #include <QFileInfo>
 #include <QTextStream>
 #include <QtDebug>
+#include <cassert>
 
 #include "frakturhandler.h"
 #include "lineboxedit.h"
 #include "dictionary.h"
 #include "textclassifier.h"
+#include "textdistance.h"
 
 BlockHighlighter::BlockHighlighter(Dictionary *dict, QTextDocument *parent):
     QSyntaxHighlighter(parent),
@@ -38,8 +40,12 @@ void BlockHighlighter::highlightBlock(const QString &text) {
             }
         }
     }
-    for (int i = 0; i < text.size()-1; i++) {
-        if (text[i] == 's' && text[i+1].isLetter()) {
+    int startPos = currentBlock().position();
+    TextDistance *dist = dynamic_cast<LineboxEdit*>(parent())->dist();
+    if (dist == nullptr) return;
+    qDebug()<<dist;
+    for (int i = 0; i < text.size(); i++) {
+        if (!dist->isCharEqual(startPos+i)) {
             setFormat(i, 1, mySFormat);
         }
     }
@@ -50,7 +56,7 @@ bool BlockHighlighter::isUnusualGap(const QString &text) const {
 }
 
 LineboxEdit::LineboxEdit(Dictionary *dict, QWidget *parent):
-    QTextEdit(parent), myDict(dict), myCurrentLine(-1) {
+    QTextEdit(parent), myDict(dict), myDist(nullptr), myCurrentLine(-1) {
     setFont(QFont("DPCustomMono2", 12));
     myHighlighter = new BlockHighlighter(myDict, this->document());
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorPosition()));
@@ -58,6 +64,8 @@ LineboxEdit::LineboxEdit(Dictionary *dict, QWidget *parent):
 
 void LineboxEdit::readFile(const QString &baseName) {
     bool firstPass = false;
+    delete myDist;
+    myDist = nullptr;
     QString fileName(baseName);
     if (QFileInfo::exists(baseName+".box")) {
          fileName += ".box";
@@ -66,6 +74,7 @@ void LineboxEdit::readFile(const QString &baseName) {
          if(!QFileInfo::exists(fileName)) return;
          firstPass = true;
     }
+    // proofed text
     myFileName = baseName+".box";
     QFile fi(fileName);
     fi.open(QFile::ReadOnly|QFile::Text);
@@ -77,7 +86,7 @@ void LineboxEdit::readFile(const QString &baseName) {
         QString line = in.readLine();
         int i = line.indexOf(" ", 1);
         QString c = line.left(i);
-        qDebug()<<line<<c;
+        //qDebug()<<line<<c;
         if (c == '\t') {
             QString box = line.mid(i+1);
             QStringList parts = box.split(" ");
@@ -90,12 +99,31 @@ void LineboxEdit::readFile(const QString &baseName) {
         }
     }
     fi.close();
+    if (QFileInfo::exists(baseName+".txt")) {
+        QFile fi(baseName+".txt");
+        fi.open(QFile::ReadOnly|QFile::Text);
+        QTextStream in(&fi);
+        in.setCodec("ISO-8859-15");
+        QStringList proofedLines;
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            proofedLines.append(line);
+        }
+        fi.close();
+        qDebug()<<"proofed"<<proofedLines.join("\n");
+        TextDistance *distPtr = new TextDistance(proofedLines.join("\n"));
+        qDebug()<<"get distance";
+        int dist = distPtr->distance(myLines.join("\n"));
+        qDebug()<<"levenshtein dist "<<dist<<" path "<<distPtr->xPath();
+        //myDist = distPtr;
+    }
     qDebug()<<myLines.size();
     if (firstPass) handleFrac();
     qDebug()<<myLines.join("\n");
     setPlainText(myLines.join("\n"));
     myCurrentLine = -1;
     textCursor().setPosition(0);
+    onCursorPosition();
 }
 
 void LineboxEdit::writeFile(const QString &fileName) {
@@ -116,8 +144,12 @@ void LineboxEdit::writeFile(const QString &fileName) {
 void LineboxEdit::onCursorPosition() {
     if (textCursor().blockNumber() != myCurrentLine) {
         myCurrentLine = textCursor().blockNumber();
-        qDebug()<<"new line "<<myCurrentLine<<myBoxes[myCurrentLine];
-        emit lineChanged(myBoxes[myCurrentLine]);
+        if (myCurrentLine < myBoxes.size()) {
+            qDebug()<<"new line "<<myCurrentLine<<myBoxes[myCurrentLine];
+            emit lineChanged(myBoxes[myCurrentLine]);
+        } else {
+            // TODO empty page
+        }
     }
 }
 
@@ -132,5 +164,12 @@ void LineboxEdit::handleFrac() {
 }
 
 QChar LineboxEdit::currentChar() const {
-    return toPlainText().at(textCursor().position());
+    return document()->characterAt(textCursor().position());
+}
+
+void LineboxEdit::updateDist() {
+    qDebug()<<"update dist";
+    int dist = myDist->distance(document()->toPlainText());
+    qDebug()<<dist;
+    myHighlighter->rehighlight();
 }

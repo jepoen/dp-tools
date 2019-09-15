@@ -7,6 +7,8 @@
 #include <QSyntaxHighlighter>
 #include<QTextEdit>
 
+#include "textdistance.h"
+
 class Dictionary;
 
 class BlockHighlighter: public QSyntaxHighlighter {
@@ -35,22 +37,30 @@ private:
     QString myFileName;
     QList<QRect> myBoxes;
     QList<QString> myLines;
+    QString myProofedText;
     BlockHighlighter *myHighlighter;
     Dictionary *myDict;
+    TextDistance *myDist;
     int myCurrentLine;
     void handleFrac();
 public:
     LineboxEdit(Dictionary *dict, QWidget *parent=nullptr);
+    ~LineboxEdit() {
+        delete myDist;
+    }
 
     void readFile(const QString& fileName);
     void writeFile(const QString& fileName);
     QChar currentChar() const;
-
+    TextDistance *dist() const { return myDist;}
 signals:
     void lineChanged(const QRect&);
 
 private slots:
     void onCursorPosition();
+
+public slots:
+    void updateDist();
 };
 
 #endif // LINEBOXEDIT_H

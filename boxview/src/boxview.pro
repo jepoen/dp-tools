@@ -22,7 +22,8 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     page.cpp \
-    textclassifier.cpp
+    textclassifier.cpp \
+    textdistance.cpp
 
 HEADERS += \
     dictionary.h \
@@ -30,7 +31,8 @@ HEADERS += \
     lineboxedit.h \
     mainwindow.h \
     page.h \
-    textclassifier.h
+    textclassifier.h \
+    textdistance.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

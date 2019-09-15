@@ -2,7 +2,8 @@
 #include <QtDebug>
 #include "page.h"
 
-Page::Page()
+Page::Page():
+    myLineBox(QRect())
 {
     resize(600, 800);
 }

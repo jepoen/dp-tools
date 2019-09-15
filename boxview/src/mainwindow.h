@@ -20,6 +20,7 @@ private:
     Page *myPage;
     QAction *openAction;
     QAction *saveAction;
+    QAction *updateDistAction;
     QString myCurrentDir;
     QString myCurrentFile;
     void createActions();

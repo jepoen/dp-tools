@@ -18,7 +18,7 @@ QString FrakturHandler::handle(QString line) const {
             qDebug()<<"sch "<<word;
             word = handleI(word);
             qDebug()<<"I "<<word;
-            word = handleStartS(word);
+            //word = handleStartS(word);
         }
         newLine.append(word);
     }
@@ -39,8 +39,8 @@ QString FrakturHandler::handleI(QString line) const {
 }
 
 QString FrakturHandler::handleSch(QString line) const {
-    line.replace(schExpr, QStringLiteral("ſch"));
-    line.replace(schaftExpr, QStringLiteral("ſchaft"));
+    line.replace(schExpr, QStringLiteral("sch"));
+    line.replace(schaftExpr, QStringLiteral("schaft"));
     return line;
 }
 

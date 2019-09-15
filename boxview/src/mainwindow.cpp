@@ -38,6 +38,8 @@ void MainWindow::createActions() {
     saveAction = new QAction(tr("Save"), this);
     saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
+    updateDistAction = new QAction(tr("Update distance"));
+    connect(updateDistAction, SIGNAL(triggered()), myEdit, SLOT(updateDist()));
     connect(myFilesWidget, SIGNAL(itemClicked(QListWidgetItem *)), this, SLOT(openFileItem(QListWidgetItem*)));
     connect(myEdit, SIGNAL(lineChanged(const QRect&)), myPage, SLOT(changeLineBox(const QRect&)));
     connect(myEdit, SIGNAL(cursorPositionChanged()), this, SLOT(changeEditPos()));
@@ -47,6 +49,8 @@ void MainWindow::createMenu() {
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(openAction);
     fileMenu->addAction(saveAction);
+    QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
+    editMenu->addAction(updateDistAction);
 }
 
 void MainWindow::showPage(const QString &baseName) {

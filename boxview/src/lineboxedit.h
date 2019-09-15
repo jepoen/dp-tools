@@ -10,11 +10,12 @@
 #include "textdistance.h"
 
 class Dictionary;
+class LineboxEdit;
 
 class BlockHighlighter: public QSyntaxHighlighter {
     Q_OBJECT
 private:
-
+    LineboxEdit *myEditor;
     QRegularExpression myGapExp;
     Dictionary *myDict;
     QTextCharFormat myWordFormat;
@@ -25,7 +26,7 @@ private:
     bool isUnusualGap(const QString& text) const;
 
 public:
-    BlockHighlighter(Dictionary *dict, QTextDocument *parent=nullptr);
+    BlockHighlighter(LineboxEdit *editor, Dictionary *dict, QTextDocument *parent=nullptr);
 protected:
     void highlightBlock(const QString &text) override;
 };
@@ -52,7 +53,7 @@ public:
     void readFile(const QString& fileName);
     void writeFile(const QString& fileName);
     QChar currentChar() const;
-    TextDistance *dist() const { return myDist;}
+    TextDistance *dist() const { return myDist; }
 signals:
     void lineChanged(const QRect&);
 

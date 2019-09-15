@@ -10,8 +10,9 @@
 #include "textclassifier.h"
 #include "textdistance.h"
 
-BlockHighlighter::BlockHighlighter(Dictionary *dict, QTextDocument *parent):
+BlockHighlighter::BlockHighlighter(LineboxEdit *editor, Dictionary *dict, QTextDocument *parent):
     QSyntaxHighlighter(parent),
+    myEditor(editor),
     myDict(dict)
 {
     myGapExp = QRegularExpression("^ |[.!?,;:] $");
@@ -41,9 +42,10 @@ void BlockHighlighter::highlightBlock(const QString &text) {
         }
     }
     int startPos = currentBlock().position();
-    TextDistance *dist = dynamic_cast<LineboxEdit*>(parent())->dist();
+    TextDistance *dist = myEditor->dist();
+    qDebug()<<"dist object "<<dist;
     if (dist == nullptr) return;
-    qDebug()<<dist;
+    qDebug()<<"levenshtein highlight"<<dist;
     for (int i = 0; i < text.size(); i++) {
         if (!dist->isCharEqual(startPos+i)) {
             setFormat(i, 1, mySFormat);
@@ -58,7 +60,7 @@ bool BlockHighlighter::isUnusualGap(const QString &text) const {
 LineboxEdit::LineboxEdit(Dictionary *dict, QWidget *parent):
     QTextEdit(parent), myDict(dict), myDist(nullptr), myCurrentLine(-1) {
     setFont(QFont("DPCustomMono2", 12));
-    myHighlighter = new BlockHighlighter(myDict, this->document());
+    myHighlighter = new BlockHighlighter(this, myDict, this->document());
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorPosition()));
 }
 
@@ -115,7 +117,7 @@ void LineboxEdit::readFile(const QString &baseName) {
         qDebug()<<"get distance";
         int dist = distPtr->distance(myLines.join("\n"));
         qDebug()<<"levenshtein dist "<<dist<<" path "<<distPtr->xPath();
-        //myDist = distPtr;
+        myDist = distPtr;
     }
     qDebug()<<myLines.size();
     if (firstPass) handleFrac();

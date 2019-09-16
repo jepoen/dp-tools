@@ -23,14 +23,19 @@ private:
     QAction *updateDistAction;
     QString myCurrentDir;
     QString myCurrentFile;
+    QString mytesseractDir;
     void createActions();
     void createMenu();
     void showPage(const QString& baseName);
     void readDir(const QString& dirName);
+    void loadSettings();
+    void saveSettings();
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    void closeEvent(QCloseEvent *);
 public slots:
     void open();
     void save();

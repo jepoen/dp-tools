@@ -19,12 +19,14 @@ MainWindow::MainWindow(QWidget *parent)
     splitter->addWidget(myFilesWidget);
     splitter->addWidget(myEdit);
     splitter->addWidget(myPage);
-    splitter->setSizes(QList<int>()<<400<<1200<<600);
+    splitter->setSizes(QList<int>()<<150<<1200<<600);
     createActions();
     createMenu();
-    resize(1400,800);
+    loadSettings();
     readDir(".");
+    resize(1800, 800);
     qDebug()<<QImageReader::supportedImageFormats();
+    qDebug()<<mytesseractDir;
 }
 
 MainWindow::~MainWindow()
@@ -51,6 +53,21 @@ void MainWindow::createMenu() {
     fileMenu->addAction(saveAction);
     QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
     editMenu->addAction(updateDistAction);
+}
+
+void MainWindow::closeEvent(QCloseEvent */*evt*/) {
+    qDebug()<<"closeEvent";
+    saveSettings();
+}
+
+void MainWindow::loadSettings() {
+    QSettings settings;
+    mytesseractDir = settings.value("tesseractDir", "/opt/tesseract/bin").toString();
+}
+
+void MainWindow::saveSettings() {
+    QSettings settings;
+    settings.setValue("tesseractDir", mytesseractDir);
 }
 
 void MainWindow::showPage(const QString &baseName) {

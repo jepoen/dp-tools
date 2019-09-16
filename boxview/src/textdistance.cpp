@@ -22,8 +22,8 @@ int TextDistance::distance(const QString &xString, int startX) {
     qDebug()<<"distance";
     if (myYstring.isEmpty()) return 0;
     myXstring = xString;
-    if (myXstring.size() > 2*myYstring.size()) {
-        myXstring = myXstring.left(myYstring.size()*2);
+    if (myXstring.size() >= 2*myYsize) {
+        myXstring = myXstring.left(myYsize*2-1);
     }
     //appendMatrix(xString.size()+1);
     qDebug()<<"compare "<<myXstring.size()<<" "<<myYstring.size();
@@ -46,14 +46,15 @@ void TextDistance::appendMatrix(int newX) {
 
 int TextDistance::levenshtein(int startX) {
     for (int x = startX; x < myXstring.size()+1; x++) {
+        int pos = idx(x, 0);
         for (int y = 1; y < myYstring.size()+1; y++) {
-            int pos = idx(x, y);
-            int prevPos = idx(x-1, y-1);
-            if (myEntries[idx(x-1,y)].dist < myEntries[prevPos].dist) {
-                prevPos = idx(x-1, y);
+            pos++;
+            int prevPos = pos-myYsize-1; // x-1, y-1
+            if (myEntries[pos-myYsize].dist < myEntries[prevPos].dist) { // x-1, y
+                prevPos = pos-myYsize;
             }
-            if (myEntries[idx(x, y-1)].dist < myEntries[prevPos].dist) {
-                prevPos = idx(x, y-1);
+            if (myEntries[pos-1].dist < myEntries[prevPos].dist) { // x, y-1
+                prevPos = pos-1;
             }
             bool equal = myXstring[x-1] == myYstring[y-1];
             myEntries[pos].pos = pos;

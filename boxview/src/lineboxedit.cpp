@@ -18,10 +18,10 @@ BlockHighlighter::BlockHighlighter(LineboxEdit *editor, Dictionary *dict, QTextD
     myDict(dict)
 {
     myGapExp = QRegularExpression("^ |[.!?,;:] $");
-    myWordFormat.setForeground(Qt::magenta);
+    myWordFormat.setForeground(Qt::blue);
     myLongSFormat.setForeground(Qt::magenta);
-    myGapFormat.setBackground(Qt::yellow);
-    myDistanceFormat.setForeground(Qt::red);
+    myGapFormat.setBackground(Qt::gray);
+    myDistanceFormat.setBackground(Qt::yellow);
 }
 
 void BlockHighlighter::highlightBlock(const QString &text) {
@@ -115,8 +115,8 @@ void LineboxEdit::readFile(const QString &baseName) {
             proofedLines.append(line);
         }
         fi.close();
-        qDebug()<<"proofed"<<proofedLines.join("\n");
-        TextDistance *distPtr = new TextDistance(proofedLines.join("\n"));
+        qDebug()<<"proofed"<<proofedLines.join(" ");
+        TextDistance *distPtr = new TextDistance(proofedLines.join(" "));
         qDebug()<<"get distance";
         int dist = distPtr->distance(myLines.join("\n"));
         qDebug()<<"levenshtein dist "<<dist<<" path "<<distPtr->xPath();
@@ -170,6 +170,8 @@ void LineboxEdit::handleFrac() {
 
 QString LineboxEdit::handleProofedLine(QString line) {
     line.replace("--", "—");
+    line.replace("<", "‹");
+    line.replace(">", "›");
     return line;
 }
 

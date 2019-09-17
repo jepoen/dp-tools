@@ -45,6 +45,10 @@ void TextDistance::appendMatrix(int newX) {
 }
 
 int TextDistance::levenshtein(int startX) {
+    QVector<int> xVal(myXstring.size());
+    QVector<int> yVal(myYstring.size());
+    for (int i = 0; i < myXstring.size(); i++) xVal[i] = myXstring[i].unicode();
+    for (int i = 0; i < myYstring.size(); i++) yVal[i] = myYstring[i].unicode();
     for (int x = startX; x < myXstring.size()+1; x++) {
         int pos = idx(x, 0);
         for (int y = 1; y < myYstring.size()+1; y++) {
@@ -56,7 +60,7 @@ int TextDistance::levenshtein(int startX) {
             if (myEntries[pos-1].dist < myEntries[prevPos].dist) { // x, y-1
                 prevPos = pos-1;
             }
-            bool equal = myXstring[x-1] == myYstring[y-1];
+            bool equal = xVal[x-1] == yVal[y-1];
             myEntries[pos].pos = pos;
             myEntries[pos].dist = myEntries[prevPos].dist + (equal? 0 : 1);
             myEntries[pos].equal = equal;
@@ -69,6 +73,7 @@ int TextDistance::levenshtein(int startX) {
     qDebug()<<"distance"<<myEntries[pos].dist;
     qDebug()<<"prev "<<myEntries[pos].prevPos;
     restorePath(myXstring.size(), myYstring.size());
+    computeCorrespondence();
     return myEntries[pos].dist;
 }
 
@@ -87,16 +92,23 @@ void TextDistance::restorePath(int x, int y) {
     if (myPath.size() > 0) qDebug()<<myPath[0].pos;
 }
 
-bool TextDistance::isCharEqual(int x) const {
+void TextDistance::computeCorrespondence() {
+    myCorrespondence.clear();
+    for (int x = 0; x < myXstring.size(); x++) {
+        myCorrespondence.append(isCharEqual(x));
+    }
+}
+
+int TextDistance::isCharEqual(int x) const {
     if (myYstring.isEmpty()) return true;
     //qDebug()<<"isEqual "<<x;
     for (const Entry& entry: myPath) {
         int entryX = entry.pos/myYsize;
         if (entryX == x+1 && entry.equal) {
-            return true;
+            return entry.pos % myYsize - 1;
         }
     }
-    return false;
+    return -1;
 }
 
 QString TextDistance::xPath() const {

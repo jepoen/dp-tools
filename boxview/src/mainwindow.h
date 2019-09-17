@@ -21,6 +21,8 @@ private:
     QAction *openAction;
     QAction *saveAction;
     QAction *updateDistAction;
+    QAction *deleteLineAction;
+    QAction *replaceFromProofedAction;
     QString myCurrentDir;
     QString myCurrentFile;
     QString mytesseractDir;

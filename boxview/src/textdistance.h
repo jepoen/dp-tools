@@ -25,16 +25,19 @@ private:
     int myYsize;
     QVector<Entry> myEntries;
     QList<Entry> myPath;
+    QList<int> myCorrespondence;
     int myDistance;
     int idx(int x, int y) const { return x*myYsize+y; }
     void appendMatrix(int newX);
     int levenshtein(int startX = 0);
     void restorePath(int x, int y);
+    void computeCorrespondence();
 public:
     TextDistance(const QString& yString = QString());
     int distance(const QString& xString, int startX = 0);
-    bool isCharEqual(int x) const;
+    int isCharEqual(int x) const;
     QString xPath() const;
+    QList<int> correspondingValues() { return myCorrespondence; }
 };
 
 #endif // TEXTDISTANCE_H

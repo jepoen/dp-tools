@@ -43,6 +43,8 @@ private:
     Dictionary *myDict;
     TextDistance *myDist;
     int myCurrentLine;
+    bool myChanged;
+
     QString handleProofedLine(QString line);
     void handleFrac();
 public:
@@ -60,9 +62,12 @@ signals:
 
 private slots:
     void onCursorPosition();
+    void onTextChanged();
 
 public slots:
     void updateDist();
+    void replaceFromProofed();
+    void deleteLine();
 };
 
 #endif // LINEBOXEDIT_H

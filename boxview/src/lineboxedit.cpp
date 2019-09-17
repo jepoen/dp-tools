@@ -27,7 +27,7 @@ BlockHighlighter::BlockHighlighter(LineboxEdit *editor, Dictionary *dict, QTextD
 void BlockHighlighter::highlightBlock(const QString &text) {
     TextClassifier classifier;
     QList<Block> blocks(classifier.classify(text));
-    qDebug()<<"Highlight blocks"<<blocks.size();
+    //qDebug()<<"Highlight blocks"<<blocks.size();
     for (const Block &block: blocks) {
         if (block.type() == TextClassifier::C_LETTER) {
             if (!myDict->contains(block.text())) {
@@ -44,12 +44,10 @@ void BlockHighlighter::highlightBlock(const QString &text) {
         }
     }
     int startPos = currentBlock().position();
-    TextDistance *dist = myEditor->dist();
-    qDebug()<<"dist object "<<dist;
-    if (dist == nullptr) return;
-    qDebug()<<"levenshtein highlight"<<dist;
+    QList<int> correspond = myEditor->dist()->correspondingValues();
     for (int i = 0; i < text.size(); i++) {
-        if (!dist->isCharEqual(startPos+i)) {
+        if (startPos + i >= correspond.size()) break;
+        if (correspond[startPos+i] < 0) {
             setFormat(i, 1, myDistanceFormat);
         }
     }
@@ -64,12 +62,15 @@ LineboxEdit::LineboxEdit(Dictionary *dict, QWidget *parent):
     setFont(QFont("DPCustomMono2", 12));
     myHighlighter = new BlockHighlighter(this, myDict, this->document());
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorPosition()));
+    connect(this, SIGNAL(textChanged()), this, SLOT(onTextChanged()));
 }
 
 void LineboxEdit::readFile(const QString &baseName) {
     bool firstPass = false;
     delete myDist;
     myDist = nullptr;
+    //myCorrespond.clear();
+    myChanged = false;
     QString fileName(baseName);
     if (QFileInfo::exists(baseName+".box")) {
          fileName += ".box";
@@ -116,23 +117,25 @@ void LineboxEdit::readFile(const QString &baseName) {
         }
         fi.close();
         qDebug()<<"proofed"<<proofedLines.join(" ");
-        TextDistance *distPtr = new TextDistance(proofedLines.join(" "));
-        qDebug()<<"get distance";
-        int dist = distPtr->distance(myLines.join("\n"));
-        qDebug()<<"levenshtein dist "<<dist<<" path "<<distPtr->xPath();
-        myDist = distPtr;
+        myProofedText = proofedLines.join("\n");
+        myDist = new TextDistance(proofedLines.join(" "));
     }
     qDebug()<<myLines.size();
     if (firstPass) handleFrac();
     qDebug()<<myLines.join("\n");
     setPlainText(myLines.join("\n"));
     myCurrentLine = -1;
-    textCursor().setPosition(0);
-    onCursorPosition();
+    updateDist();
+    setFocus();
 }
 
 void LineboxEdit::writeFile(const QString &fileName) {
     QStringList lines = toPlainText().split("\n");
+    if (lines.size() != myBoxes.size()) {
+        QMessageBox::warning(this, tr("Wrong line number"),
+                             tr("Text line number differs from box number.\nCannot save file."));
+        return;
+    }
     QFile fo(fileName);
     if (!fo.open(QFile::WriteOnly|QFile::Text)) return;
     QTextStream out(&fo);
@@ -144,6 +147,7 @@ void LineboxEdit::writeFile(const QString &fileName) {
         out<<"\t "<<myBoxes[i].x()<<" "<<myBoxes[i].y()<<" "<<myBoxes[i].width()<<" "<<myBoxes[i].height()<<endl;
     }
     fo.close();
+    myChanged = false;
 }
 
 void LineboxEdit::onCursorPosition() {
@@ -156,6 +160,10 @@ void LineboxEdit::onCursorPosition() {
             // TODO empty page
         }
     }
+}
+
+void LineboxEdit::onTextChanged() {
+    myChanged = true;
 }
 
 void LineboxEdit::handleFrac() {
@@ -183,6 +191,60 @@ void LineboxEdit::updateDist() {
     qDebug()<<"update dist";
     //QProgressDialog msg("Compute distance", "Distance", 0, 100, this);
     int dist = myDist->distance(document()->toPlainText());
-    qDebug()<<dist;
+    QList<int> correspond = myDist->correspondingValues();
+    qDebug()<<dist<<correspond;
     myHighlighter->rehighlight();
+}
+
+void LineboxEdit::replaceFromProofed() {
+    qDebug()<<"replaced from proofed text";
+    QString text = document()->toPlainText();
+    if (text.size() == 0) return;
+    myDist->distance(text);
+    QList<int> correspond = myDist->correspondingValues();
+    assert(text.size() == correspond.size());
+    for (int i = 1; i < text.size()-1; i++) {
+        if (text[i] == '\n') continue;
+        if (correspond[i] < 0) {
+            qDebug()<<"replace "<<i<<" "<<text[i-1]<<text[i]<<text[i+1];
+            if (correspond[i-1] >= 0 && correspond[i+1] >= 0) {
+                qDebug()<<" corresponds"<<correspond[i-1]<<" "
+                        <<correspond[i+1];
+                qDebug()<<" corresponds"<<myProofedText[correspond[i-1]]
+                        <<myProofedText[correspond[i-1]+1]
+                        <<myProofedText[correspond[i+1]];
+                if (correspond[i+1]-correspond[i-1] == 1) { // superfluous letter
+                    text[i] = QChar(0x3fff);
+                } else {
+                    text[i] = myProofedText[correspond[i-1]+1];
+                }
+            }
+        }
+    }
+    int oldSize = text.size();
+    text = text.replace(QString("\u3fff"), "");
+    if (oldSize != text.size()) {
+        myDist->distance(text);
+    }
+    document()->setPlainText(text);
+}
+
+void LineboxEdit::deleteLine() {
+    QTextCursor cursor = textCursor();
+    int line = cursor.blockNumber();
+    cursor.movePosition(QTextCursor::StartOfBlock);
+    if (line < myBoxes.size()-1) {
+        cursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        myBoxes.removeAt(line);
+        emit lineChanged(myBoxes[line]);
+    } else if (line == myBoxes.size()-1) {
+        cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        myBoxes.removeAt(line);
+        line--;
+        cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, line);
+        emit lineChanged(myBoxes[line]);
+    }
+    setTextCursor(cursor);
 }

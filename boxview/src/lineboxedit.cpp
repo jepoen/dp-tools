@@ -75,7 +75,7 @@ void LineboxEdit::readFile(const QString &baseName) {
     if (QFileInfo::exists(baseName+".box")) {
          fileName += ".box";
     } else {
-         fileName += ".tif.box";
+         fileName += "-raw.box";
          if(!QFileInfo::exists(fileName)) return;
          firstPass = true;
     }
@@ -210,9 +210,12 @@ void LineboxEdit::replaceFromProofed() {
             if (correspond[i-1] >= 0 && correspond[i+1] >= 0) {
                 qDebug()<<" corresponds"<<correspond[i-1]<<" "
                         <<correspond[i+1];
-                qDebug()<<" corresponds"<<myProofedText[correspond[i-1]]
-                        <<myProofedText[correspond[i-1]+1]
-                        <<myProofedText[correspond[i+1]];
+                // debug
+                QString repl;
+                for (int k = correspond[i-1]; k <= correspond[i+1]; k++) {
+                    repl += myProofedText[k];
+                }
+                qDebug()<<" corresponds"<<repl;
                 if (correspond[i+1]-correspond[i-1] == 1) { // superfluous letter
                     text[i] = QChar(0x3fff);
                 } else {

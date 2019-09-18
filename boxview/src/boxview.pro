@@ -22,6 +22,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     page.cpp \
+    tesseract.cpp \
     textclassifier.cpp \
     textdistance.cpp
 
@@ -31,6 +32,7 @@ HEADERS += \
     lineboxedit.h \
     mainwindow.h \
     page.h \
+    tesseract.h \
     textclassifier.h \
     textdistance.h
 

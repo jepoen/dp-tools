@@ -5,16 +5,19 @@
 #include "dictionary.h"
 #include "lineboxedit.h"
 #include "page.h"
+#include "tesseract.h"
 
 // evt. paket qt5-image-formats-plugins erforderlich
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    loadSettings();
     QSplitter *splitter = new QSplitter();
     myDict = new Dictionary("words-1901.txt");
     myFilesWidget = new QListWidget();
     myEdit = new LineboxEdit(myDict);
     myPage = new Page();
+    tesseract = new Tesseract(myTesseractPath, myTesseractModel, this);
     setCentralWidget(splitter);
     splitter->addWidget(myFilesWidget);
     splitter->addWidget(myEdit);
@@ -22,11 +25,10 @@ MainWindow::MainWindow(QWidget *parent)
     splitter->setSizes(QList<int>()<<150<<1200<<600);
     createActions();
     createMenu();
-    loadSettings();
     readDir(".");
     resize(1800, 800);
     qDebug()<<QImageReader::supportedImageFormats();
-    qDebug()<<mytesseractDir;
+    qDebug()<<myTesseractPath;
 }
 
 MainWindow::~MainWindow()
@@ -68,24 +70,34 @@ void MainWindow::closeEvent(QCloseEvent */*evt*/) {
 
 void MainWindow::loadSettings() {
     QSettings settings;
-    mytesseractDir = settings.value("tesseractDir", "/opt/tesseract/bin").toString();
+    myTesseractPath = settings.value("tesseractPath", "/opt/tesseract/bin/tesseract").toString();
+    myTesseractModel = settings.value("tesseractModel", "deu_frak").toString();
 }
 
 void MainWindow::saveSettings() {
     QSettings settings;
-    settings.setValue("tesseractDir", mytesseractDir);
+    settings.setValue("tesseractPath", myTesseractPath);
+    settings.setValue("tesseractModel", myTesseractModel);
+
 }
 
-void MainWindow::showPage(const QString &baseName) {
+void MainWindow::showPage(const QString &pixFileName) {
     //QString boxFileName = baseName+".box";
+    QString baseName = QFileInfo(pixFileName).absoluteFilePath();
+    baseName = baseName.left(baseName.lastIndexOf('.'));
     myCurrentFile = baseName;
-    qDebug()<<"showPage "<<baseName;
-    QString pixFileName = baseName+".tif";
+    qDebug()<<"showPage "<<baseName<<pixFileName;
     if (QFileInfo::exists(pixFileName)) {
         QPixmap pixmap(pixFileName);
     // set page first
         qDebug()<<"pixmap "<<pixFileName<<" "<<pixmap.size();
         myPage->setPage(pixmap);
+    }
+    QString rawBoxName = baseName+"-raw.box";
+    qDebug()<<"raw box name"<<rawBoxName;
+    if (!QFileInfo::exists(rawBoxName)) {
+        qDebug()<<"build "<<rawBoxName;
+        tesseract->buildBoxFile(pixFileName);
     }
     myEdit->readFile(baseName);
 }
@@ -103,7 +115,7 @@ void MainWindow::save() {
 
 void MainWindow::readDir(const QString &dirName) {
     QDir dir(dirName);
-    QStringList fileNames = dir.entryList(QStringList()<<"*.tif", QDir::Files, QDir::Name);
+    QStringList fileNames = dir.entryList(QStringList()<<"*.tif"<<"*png", QDir::Files, QDir::Name);
     qDebug()<<fileNames;
     myFilesWidget->clear();
     for (const QString& fileName: fileNames) {
@@ -116,8 +128,7 @@ void MainWindow::readDir(const QString &dirName) {
 
 void MainWindow::openFileItem(QListWidgetItem *item) {
     QString fileName = item->text();
-    QString baseName = QFileInfo(fileName).baseName();
-    QString filePath = QDir(myCurrentDir).absoluteFilePath(baseName);
+    QString filePath = QDir(myCurrentDir).absoluteFilePath(fileName);
     showPage(filePath);
 }
 

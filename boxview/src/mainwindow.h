@@ -9,6 +9,7 @@ class QListWidgetItem;
 class Page;
 class LineboxEdit;
 class Dictionary;
+class Tesseract;
 
 class MainWindow : public QMainWindow
 {
@@ -18,6 +19,7 @@ private:
     QListWidget *myFilesWidget;
     LineboxEdit *myEdit;
     Page *myPage;
+    Tesseract *tesseract;
     QAction *openAction;
     QAction *saveAction;
     QAction *updateDistAction;
@@ -25,7 +27,8 @@ private:
     QAction *replaceFromProofedAction;
     QString myCurrentDir;
     QString myCurrentFile;
-    QString mytesseractDir;
+    QString myTesseractPath;
+    QString myTesseractModel;
     void createActions();
     void createMenu();
     void showPage(const QString& baseName);

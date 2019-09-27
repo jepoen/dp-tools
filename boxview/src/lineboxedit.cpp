@@ -122,7 +122,7 @@ void LineboxEdit::readFile(const QString &baseName) {
     }
     qDebug()<<myLines.size();
     if (firstPass) handleFrac();
-    qDebug()<<myLines.join("\n");
+    qDebug()<<"myLines"<<myLines.join("\n");
     setPlainText(myLines.join("\n"));
     myCurrentLine = -1;
     updateDist();
@@ -189,6 +189,7 @@ QChar LineboxEdit::currentChar() const {
 
 void LineboxEdit::updateDist() {
     qDebug()<<"update dist";
+    if (myDist == nullptr) return;
     //QProgressDialog msg("Compute distance", "Distance", 0, 100, this);
     int dist = myDist->distance(document()->toPlainText());
     QList<int> correspond = myDist->correspondingValues();

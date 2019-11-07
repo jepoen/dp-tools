@@ -29,6 +29,12 @@ TODO: Training Voting-Modell
 
 ## OCR
 
+* Installation ohne Anaconda mit Python3-venv
+
+* Installation `tensorflow=2.0.0` (ohne GPU-Support)
+
+* Installation von `calamari_ocr`, `kraken` in dieser Umgebung
+
 * Scantailor-Ausgabe auf 300 dpi, Tiefe 1 runterskalieren
 
 <pre>

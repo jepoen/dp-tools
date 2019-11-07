@@ -27,7 +27,7 @@ def run():
     destDir = args['dir']
     os.makedirs(destDir, exist_ok=True)
   for i, b in enumerate(data['boxes']):
-    filePath = os.path.join(destDir, '{:03d}.png'.format(i))
+    filePath = os.path.join(destDir, 'line-{:03d}.png'.format(i))
     x0, y0, x1, y1 = b
     im1 = im.crop((x0, y0, x1, y1))
     im1.save(filePath)

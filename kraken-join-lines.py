@@ -13,7 +13,7 @@ def run():
   parser.add_argument('text', metavar='txt',
     help='text file')
   parser.add_argument('--dir', '-d', help='segment directory')
-  parser.add_argument('--pred', '-p', help='prediction file suffix',
+  parser.add_argument('--pred', '-p', help='prediction file suffix (pred.txt)',
     default='pred.txt')
   nargs = parser.parse_args()
   args = vars(nargs)

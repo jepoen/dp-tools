@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse, json, os, sys
 from PIL import Image, ImageDraw
 
@@ -27,7 +29,7 @@ def run():
     os.makedirs(destDir, exist_ok=True)
   lines = list()
   for i, b in enumerate(data['boxes']):
-    filePath = os.path.join(destDir, '{:03d}.{:s}'.format(i, args['pred']))
+    filePath = os.path.join(destDir, 'l-{:03d}.{:s}'.format(i, args['pred']))
     x0, y0, x1, y1 = b
     with open(filePath) as fi:
       line = fi.read()

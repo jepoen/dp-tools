@@ -2,6 +2,33 @@
 import argparse, json, os, subprocess, sys
 from PIL import Image, ImageDraw, ImageFont
 
+def boxQuartiles(boxes, idx):
+  vals = list()
+  for b in boxes:
+    vals.append(b[idx])
+  return quartiles(vals)
+
+def quartiles(vals):
+  vals = sorted(vals)
+  lenVals = len(vals)
+  q1 = lenVals//4
+  q2 = lenVals//2
+  q3 = 3*lenVals//4
+  return vals[0], vals[q1], vals[q2], vals[q3], vals[-1]
+
+def colDiffs(boxes, idx):
+  start = True
+  diffs = list()
+  for b in boxes:
+    if start:
+      diffs.append(0)
+      start = False
+    else:
+      diffs.append(b[idx]-oldVal)
+    oldVal = b[idx]
+  print('colDiffs', diffs)
+  return diffs
+
 def splitImage(imgFile, linesFile, pageDir):
   im = Image.open(imgFile).convert("RGBA")
   draw = ImageDraw.Draw(im)
@@ -70,6 +97,17 @@ def catLines(workDir, pgNr):
     lines.append(line)
     fi.close()
   # TODO paragraph detection
+  linesFile = os.path.join(workDir, pgNr, 'lines.json')
+  fi = open(linesFile)
+  data = json.load(fi)
+  fi.close()
+  boxes = data['boxes']
+  qX0 = boxQuartiles(boxes, 0)
+  qX1 = boxQuartiles(boxes, 2)
+  lineDiffs = colDiffs(boxes, 3)
+  qL = quartiles(lineDiffs)
+  print('quartiles x0', qX0)
+  print('quartiles diffs', qL)
   return '\n'.join(lines)
 
 def writeText(outDir, pgNr, text):

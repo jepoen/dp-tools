@@ -26,24 +26,60 @@ def splitImage(imgFile, linesFile, pageDir):
   im.save(os.path.join(pageDir, 'segments.png'))
   return lineFiles
 
-def handleImages(imgDir, workDir):
+def findImages(imgDir, workDir):
   i = 0
+  imgFiles = list()
   for fileName in sorted(os.listdir(imgDir)):
     if fileName[-3:] != 'tif': continue
     i += 1
     print(i, fileName)
     pgNr = '{:03d}'.format(i)
-    pageDir = os.path.join(workDir, pgNr)
-    os.makedirs(pageDir, exist_ok=True)
     imgFile = os.path.join(imgDir, fileName)
-    linesFile = os.path.join(pageDir, 'lines.json')
-    subprocess.run(['kraken', '-i', imgFile, linesFile, 'segment'])
-    if not os.path.exists(linesFile): continue
-    splitImage(imgFile, linesFile, pageDir)
+    imgFiles.append((pgNr, imgFile,))
+  return imgFiles
 
-def ocr(lineFiles):
-  cmdLine = ['calamari-predict', '--checkpoint']
+def splitImageFile(workDir, pgNr, imgFile):
+  pageDir = os.path.join(workDir, pgNr)
+  os.makedirs(pageDir, exist_ok=True)
+  linesFile = os.path.join(pageDir, 'lines.json')
+  subprocess.run(['kraken', '-i', imgFile, linesFile, 'segment'])
+  return splitImage(imgFile, linesFile, pageDir)
+
+def getModels(modelDir):
+  models = list()
+  for fileName in os.listdir(modelDir):
+    parts = fileName.split('.')
+    if parts[1] == 'ckpt':
+      models.append(os.path.join(modelDir, parts[0]+'.ckpt'))
+  return models
+
+def ocr(lineFiles, models):
+  cmdLine = ['calamari-predict', '--checkpoint'] + models + \
+    ['--files'] + lineFiles
+  print(cmdLine)
+  subprocess.run(cmdLine)
  
+def catLines(workDir, pgNr):
+  inDir = os.path.join(workDir, pgNr)
+  lines = list()
+  for fileName in sorted(os.listdir(inDir)):
+    parts = fileName.split('.')
+    if parts[-1] != 'txt': continue
+    fi = open(os.path.join(inDir, fileName))
+    line = fi.readline()
+    lines.append(line)
+    fi.close()
+  # TODO paragraph detection
+  return '\n'.join(lines)
+
+def writeText(outDir, pgNr, text):
+  if text.strip() == '':
+    text = '[Blank Page]'
+  fileName = os.path.join(outDir, pgNr+'.txt')
+  fo = open(fileName, 'w')
+  fo.write(text)
+  fo.write('\n')
+  fo.close()
 
 def run():
   parser = argparse.ArgumentParser(
@@ -52,14 +88,23 @@ def run():
     help='Images\' directory')
   parser.add_argument('--workdir', '-w',
     help='Images\' directory')
+  parser.add_argument('--modeldir', '-m',
+    help='Calamari models\' directory')
+  parser.add_argument('--outdir', '-o',
+    help='OCR output directory')
   nargs = parser.parse_args()
   args = vars(nargs)
   if args['workdir'] is None:
     print('Workdir missing')
     os.exit(1)
   os.makedirs(args['workdir'], exist_ok=True)
-  lineFiles = handleImages(args['imgdir'], args['workdir'])
-  ocr(lineFiles)
+  os.makedirs(args['outdir'], exist_ok=True)
+  models = getModels(args['modeldir'])
+  for pgNr, imgFile in findImages(args['imgdir'], args['workdir']):
+    lineFiles = splitImageFile(args['workdir'], pgNr, imgFile)
+    ocr(lineFiles, models)
+    txt = catLines(args['workdir'], pgNr)
+    writeText(args['outdir'], pgNr, txt)
 
 if __name__ == '__main__':
   run()

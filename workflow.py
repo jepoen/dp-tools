@@ -11,6 +11,7 @@ def boxQuartiles(boxes, idx):
 def quartiles(vals):
   vals = sorted(vals)
   lenVals = len(vals)
+  if lenVals == 0: return None
   q1 = lenVals//4
   q2 = lenVals//2
   q3 = 3*lenVals//4
@@ -28,6 +29,13 @@ def colDiffs(boxes, idx):
     oldVal = b[idx]
   print('colDiffs', diffs)
   return diffs
+
+def lineLens(boxes, x0, x1):
+  llens = list()
+  for b in boxes:
+    llen = b[x1] - b[x0]
+    llens.append(llen)
+  return llens
 
 def splitImage(imgFile, linesFile, pageDir):
   im = Image.open(imgFile).convert("RGBA")
@@ -57,7 +65,7 @@ def findImages(imgDir, workDir):
   i = 0
   imgFiles = list()
   for fileName in sorted(os.listdir(imgDir)):
-    if fileName[-3:] != 'tif': continue
+    if fileName[-3:] not in ['png', 'tif']: continue
     i += 1
     print(i, fileName)
     pgNr = '{:03d}'.format(i)
@@ -85,7 +93,15 @@ def ocr(lineFiles, models):
     ['--files'] + lineFiles
   print(cmdLine)
   subprocess.run(cmdLine)
- 
+
+def makeParas(lines, paragraphs):
+  text = ""
+  for l, p in zip(lines, paragraphs):
+    if p:
+      text += '\n'
+    text += l + '\n'
+  return text
+
 def catLines(workDir, pgNr):
   inDir = os.path.join(workDir, pgNr)
   lines = list()
@@ -102,13 +118,32 @@ def catLines(workDir, pgNr):
   data = json.load(fi)
   fi.close()
   boxes = data['boxes']
-  qX0 = boxQuartiles(boxes, 0)
-  qX1 = boxQuartiles(boxes, 2)
-  lineDiffs = colDiffs(boxes, 3)
-  qL = quartiles(lineDiffs)
-  print('quartiles x0', qX0)
-  print('quartiles diffs', qL)
-  return '\n'.join(lines)
+  lineCount = len(boxes)
+  paraList = [False]*lineCount
+  if lineCount == 0: #empty page
+    return ''
+  if lineCount > 1:
+    qX0 = boxQuartiles(boxes, 0)
+    qX1 = boxQuartiles(boxes, 2)
+    lineDiffs = colDiffs(boxes, 3)
+    qLD = quartiles(lineDiffs[1:])
+    lLens = lineLens(boxes, 0, 2)
+    qLL = quartiles(lLens)
+    print('quartiles x0', qX0)
+    print('quartiles diffs', qLD)
+    print('quartiles lens', qLL)
+    for i, b in enumerate(boxes):
+      x0, y0, x1, y1 = b
+      if abs(x0 - qX0[2]) > 0.05*qLL[2]:
+        paraList[i] = True
+      elif abs(x1 -qX1[2]) > 0.05*qLL[2] and i < lineCount-1:
+        paraList[i+1] = True
+      elif i > 0 and lineDiffs[i] > 1.5*qLD[2]:
+        paraList[i] = True
+  paraFile = os.path.join(workDir, pgNr, 'paragraphs.json')
+  with open(paraFile, 'w') as fo:
+    json.dump({'paragraphs': paraList}, fo)
+  return makeParas(lines, paraList)
 
 def writeText(outDir, pgNr, text):
   if text.strip() == '':

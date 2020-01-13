@@ -47,19 +47,22 @@ def findImages(imgDir, workDir):
   return imgFiles
 
 def splitImageFiles(workDir, pgImgFiles):
-  cmdLine = ['kraken']
+  cmdLine = ['kraken', '-v']
   for pgNr, imgFile in pgImgFiles:
     pageDir = os.path.join(workDir, pgNr)
+    pageFile = os.path.join(pageDir, pgNr+'.png')
     os.makedirs(pageDir, exist_ok=True)
+    subprocess.run(['convert', '-scale', '50%', imgFile, pageFile])
     linesFile = os.path.join(pageDir, 'lines.json')
-    cmdLine += ['-i', imgFile, linesFile]
+    cmdLine += ['-i', pageFile, linesFile]
   cmdLine.append('segment')
   print(cmdLine)
   subprocess.run(cmdLine)
-  for pgNr, imgFile in pgImgFiles:
+  for pgNr, _ in pgImgFiles:
     pageDir = os.path.join(workDir, pgNr)
+    pageFile = os.path.join(pageDir, pgNr+'.png')
     linesFile = os.path.join(pageDir, 'lines.json')
-    splitImage(imgFile, linesFile, pageDir)
+    splitImage(pageFile, linesFile, pageDir)
 
 def run():
   parser = argparse.ArgumentParser(

@@ -6,6 +6,7 @@
 
 class QAction;
 class QActionGroup;
+class QLabel;
 class QLineEdit;
 class QScrollArea;
 
@@ -18,12 +19,15 @@ private:
     QAction *openAction;
     QScrollArea *mainWidget;
     QActionGroup *editActions;
+    QLabel *lCurrentChar;
 
     QList<LineEdit*> myLineEdits;
+    QString myDir;
 
     void createActions();
     void createMenus();
     void createMainWidget();
+    void createStatusBar();
     void showPage(const QString& dirName);
 
 public:
@@ -32,5 +36,6 @@ public:
 private slots:
     void openPage();
     void handleLine(QAction *);
+    void getCurrentChar(int /*old*/, int pos);
 };
 #endif // MAINWINDOW_H

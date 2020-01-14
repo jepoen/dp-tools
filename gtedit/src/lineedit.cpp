@@ -40,11 +40,13 @@ LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
     }
     lControl->addWidget(lFile);
     QToolButton *bSave = new QToolButton();
+    bSave->setFocusPolicy(Qt::NoFocus);
     QAction *saveAction = new QAction(tr("Save"), this);
     bSave->setDefaultAction(saveAction);
     connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
     lControl->addWidget(bSave);
     QToolButton *bDel = new QToolButton();
+    bDel->setFocusPolicy(Qt::NoFocus);
     QAction *delAction = new QAction(tr("Delete"), this);
     bDel->setDefaultAction(delAction);
     connect(delAction, SIGNAL(triggered()), this, SLOT(del()));
@@ -62,6 +64,7 @@ LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
     myLineEdit = new QLineEdit();
     file.open(QFile::ReadOnly|QFile::Text);
     myLineEdit->setText(QString(file.readAll()));
+    myLineEdit->setCursorPosition(0);
     layout->addWidget(myLineEdit);
     qDebug()<<"widget created";
 }

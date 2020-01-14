@@ -6,10 +6,13 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    myDir = QDir(".").absolutePath();
     createActions();
     createMenus();
     createMainWidget();
+    createStatusBar();
     resize(1000, 800);
+
 }
 
 MainWindow::~MainWindow() {
@@ -31,6 +34,11 @@ void MainWindow::createMainWidget() {
     editActions = new QActionGroup(mainWidget);
     connect(editActions, SIGNAL(triggered(QAction *)), this, SLOT(handleLine(QAction *)));
     setCentralWidget(mainWidget);
+}
+
+void MainWindow::createStatusBar() {
+    lCurrentChar = new QLabel();
+    statusBar()->addWidget(lCurrentChar);
 }
 
 void MainWindow::showPage(const QString& dirName) {
@@ -58,16 +66,40 @@ void MainWindow::showPage(const QString& dirName) {
         le->setScale(0.5);
         layout->addWidget(le);
         myLineEdits.append(le);
+        connect(le->editor(), SIGNAL(cursorPositionChanged(int, int)), this, SLOT(getCurrentChar(int, int)));
+    }
+    if (myLineEdits.size() > 0) {
+        qDebug()<<"Set focus";
+        QTimer::singleShot(0, myLineEdits.at(0)->editor(), SLOT(setFocus()));
+        myLineEdits.at(0)->editor()->home(false);
+        QTimer::singleShot(0, this, SLOT(getCurrentChar(0, 0)));
     }
     widget->setLayout(layout);
     mainWidget->setWidget(widget);
 }
 
 void MainWindow::openPage() {
-    QString dir = QFileDialog::getExistingDirectory(this, tr("line directory"));
-    showPage(dir);
+    QString dir = QFileDialog::getExistingDirectory(this, tr("line directory"), myDir);
+    if (!dir.isEmpty()) {
+        myDir = dir;
+        showPage(dir);
+    }
 }
 
 void MainWindow::handleLine(QAction *action) {
     qDebug()<<"handleLine"<<action->data();
+}
+
+void MainWindow::getCurrentChar(int /*oldPos*/, int newPos) {
+    QWidget *currWidget =  focusWidget();
+    QLineEdit *ed = qobject_cast<QLineEdit*>(currWidget);
+    qDebug()<<"Cursor changed";
+    if (ed == nullptr) return;
+    if (newPos >= ed->text().size()) {
+        qDebug()<<"pos"<<newPos<<" size "<<ed->text().size();
+        return;
+    }
+    QChar c = ed->text().at(newPos);
+    qDebug()<<c;
+    lCurrentChar->setText(QString("%1 %2").arg(c).arg(c.unicode(), 4, 16));
 }

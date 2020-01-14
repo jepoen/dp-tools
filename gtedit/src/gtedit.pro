@@ -17,13 +17,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     lineedit.cpp \
-    lineseditor.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     lineedit.h \
-    lineseditor.h \
     mainwindow.h
 
 # Default rules for deployment.

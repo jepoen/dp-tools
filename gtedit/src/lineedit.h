@@ -24,6 +24,7 @@ public:
     LineEdit(const QDir &dir, const QString& fileName, QWidget *parent = Q_NULLPTR);
     void setScale(double scale);
     void setFont(const QFont font);
+    QLineEdit *editor() const { return myLineEdit; }
 private slots:
     void save();
     void del();

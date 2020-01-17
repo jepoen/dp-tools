@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     myDir = QDir(".").absolutePath();
-    myScale = 100;
+    myScale = 1.0;
     createActions();
     createMenus();
     createMainWidget();
@@ -117,8 +117,8 @@ void MainWindow::getCurrentChar(int /*oldPos*/, int newPos) {
 void MainWindow::setScale() {
     QAction *action = qobject_cast<QAction *>(sender());
     if (action == nullptr) return;
-    myScale = action->data().toInt();
+    myScale = action->data().toInt()*0.01;
     for(LineEdit *ed: myLineEdits) {
-        ed->setScale(myScale*0.01);
+        ed->setScale(myScale);
     }
 }

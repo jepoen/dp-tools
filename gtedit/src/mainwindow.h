@@ -25,7 +25,7 @@ private:
 
     QList<LineEdit*> myLineEdits;
     QString myDir;
-    int myScale;
+    double myScale;
 
     void createActions();
     void createMenus();

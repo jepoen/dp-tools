@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     myDir = QDir(".").absolutePath();
+    myScale = 100;
     createActions();
     createMenus();
     createMainWidget();
@@ -21,11 +22,20 @@ MainWindow::~MainWindow() {
 void MainWindow::createActions() {
     openAction = new QAction(tr("Open page"), this);
     connect(openAction, SIGNAL(triggered()), this, SLOT(openPage()));
+    scale50Action = new QAction(tr("50%"), this);
+    scale50Action->setData(50);
+    connect(scale50Action, SIGNAL(triggered()), this, SLOT(setScale()));
+    scale100Action = new QAction(tr("100%"), this);
+    scale100Action->setData(100);
+    connect(scale100Action, SIGNAL(triggered()), this, SLOT(setScale()));
 }
 
 void MainWindow::createMenus() {
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(openAction);
+    QMenu *viewMenu = menuBar()->addMenu(("&View"));
+    viewMenu->addAction(scale50Action);
+    viewMenu->addAction(scale100Action);
 }
 
 void MainWindow::createMainWidget() {
@@ -63,7 +73,7 @@ void MainWindow::showPage(const QString& dirName) {
     for (QString f: fileNames) {
         LineEdit *le = new LineEdit(dir, f);
         le->setFont(font);
-        le->setScale(0.5);
+        le->setScale(myScale);
         layout->addWidget(le);
         myLineEdits.append(le);
         connect(le->editor(), SIGNAL(cursorPositionChanged(int, int)), this, SLOT(getCurrentChar(int, int)));
@@ -102,4 +112,13 @@ void MainWindow::getCurrentChar(int /*oldPos*/, int newPos) {
     QChar c = ed->text().at(newPos);
     qDebug()<<c;
     lCurrentChar->setText(QString("%1 %2").arg(c).arg(c.unicode(), 4, 16));
+}
+
+void MainWindow::setScale() {
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action == nullptr) return;
+    myScale = action->data().toInt();
+    for(LineEdit *ed: myLineEdits) {
+        ed->setScale(myScale*0.01);
+    }
 }

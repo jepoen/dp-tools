@@ -17,12 +17,15 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 private:
     QAction *openAction;
+    QAction *scale100Action;
+    QAction *scale50Action;
     QScrollArea *mainWidget;
     QActionGroup *editActions;
     QLabel *lCurrentChar;
 
     QList<LineEdit*> myLineEdits;
     QString myDir;
+    int myScale;
 
     void createActions();
     void createMenus();
@@ -37,5 +40,6 @@ private slots:
     void openPage();
     void handleLine(QAction *);
     void getCurrentChar(int /*old*/, int pos);
+    void setScale();
 };
 #endif // MAINWINDOW_H

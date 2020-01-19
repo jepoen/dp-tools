@@ -109,11 +109,16 @@ def makeParas(lines, paragraphs):
   return text
 
 def catLines(workDir, pgNr):
+  linesFile = os.path.join(workDir, pgNr, 'lines.json')
+  fi = open(linesFile)
+  data = json.load(fi)
+  fi.close()
+  boxes = data['boxes']
+  lineCount = len(boxes)
   inDir = os.path.join(workDir, pgNr)
   lines = list()
-  for fileName in sorted(os.listdir(inDir)):
-    parts = fileName.split('.')
-    if parts[-1] != 'txt': continue
+  for i in range(lineCount):
+    fileName = 'l-{:03d}.pred.txt'.format(i)
     fi = open(os.path.join(inDir, fileName))
     line = fi.readline()
     lines.append(line)

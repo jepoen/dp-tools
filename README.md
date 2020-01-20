@@ -56,3 +56,17 @@ Aufruf:
 ```shell
 python topng.py tifDir pngDir [scale]
 ```
+
+## Calamari-OCR
+
+Vorgehen:
+
+* Seiten in 300-dpi-PNG mit Tiefe 1 umwandeln
+* Seite in Zeilen segmentieren (Kraken oder `tesseract lstmbox`)
+* Zeilen mit `calamari predict` erkennen
+* Zeilen zusammensetzen, Absatzheuristik über JSON-Boxfile
+* Postprocessing: Abteilungen zusammenziehen, Zeichen ersetzen
+
+## Calamari-Training
+
+* Ground-Truth-Files aus Zeilenbildern erzeugen

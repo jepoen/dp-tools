@@ -15,15 +15,27 @@ tesseractCmd = '/opt/tesseract/bin/tesseract'
 # tesseract language model
 tesseractLang = 'deu_frak'
 
-def convertLstm2Lines(imgFile, lstmFile, linesFile):
+def convertLstm2Lines(imgFile, lstmFile, pageDir):
+  linesFile = os.path.join(pageDir, 'lines.json')
   im = Image.open(imgFile)
   w, h = im.size
   boxes = list()
+  lineNr = 0
+  txt = ''
   for line in open(lstmFile):
-    if line[0] != '\t': continue
-    #print(line)
-    _, x0, y0, x1, y1, _ = line.split(' ')
-    boxes.append((int(x0), h - int(y1), int(x1), h - int(y0),))
+    if line[0] != '\t':
+      if line[0] == ' ':
+        txt += ' '
+      else:
+        txt += line.split(' ')[0]
+    else:
+      _, x0, y0, x1, y1, _ = line.split(' ')
+      boxes.append((int(x0), h - int(y1), int(x1), h - int(y0),))
+      txtFile = os.path.join(pageDir, 't-{:03d}.txt'.format(lineNr))
+      with open(txtFile, 'w') as fo:
+        fo.write(txt)
+      lineNr += 1
+      txt = ''
   fo = open(linesFile, 'w')
   json.dump({'boxes': boxes}, fo)
   fo.close()
@@ -75,8 +87,7 @@ def splitImageFiles(workDir, pgImgFiles):
     subprocess.run(['convert', '-scale', '50%', imgFile, pageFile])
     subprocess.run([tesseractCmd, pageFile, lstmBaseFile, '-l', tesseractLang,
       'lstmbox'])
-    linesFile = os.path.join(pageDir, 'lines.json')
-    convertLstm2Lines(pageFile, lstmFile, linesFile)
+    convertLstm2Lines(pageFile, lstmFile, pageDir)
   for pgNr, _ in pgImgFiles:
     pageDir = os.path.join(workDir, pgNr)
     pageFile = os.path.join(pageDir, pgNr+'.png')

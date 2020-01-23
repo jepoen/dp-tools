@@ -31,7 +31,8 @@ th {
 </style>
 <body>
 <p>
-Zeilen: {{summary.lines}}, Zeilen mit Fehlern: {{summary.errLines}}
+Zeilen: {{summary.lines}}, Zeilen mit Differenzen: {{summary.errLines}},
+Summe aller Distanzen: {{summary.sumDiff}}
 </p>
 {% for e in summary.entries %}
 <div>
@@ -59,24 +60,30 @@ def removeDoubles(l):
     else:
       last = l[i]
 
+def getChar(txt, pos):
+  if pos < 0:
+    return '⋄'
+  else:
+    return txt[pos]
+
 def buildTexts(txt1, pos1, txt2, pos2):
   r1 = ''
   r2 = ''
   for i in range(len(pos1)):
     if txt1[pos1[i]] == txt2[pos2[i]]:
       if pos1[i] < 0:
-        r1 += '<span class="missing">⋄</span>'
-        r2 += '<span class="missing">⋄</span>'
+        r1 += '<span class="missing">{}</span>'.format(getChar(txt1, pos1[i]))
+        r2 += '<span class="missing">{}</span>'.format(getChar(txt2, pos2[i]))
       else:
         r1 += txt1[pos1[i]]
         r2 += txt2[pos2[i]]
     else:
       if pos1[i] < 0:
-        r1 += '<span class="missing">⋄</span>'
-        r2 += '<span class="ins">'+txt2[pos2[i]]+'</span>'
+        r1 += '<span class="missing">{}</span>'.format(getChar(txt1, pos1[i]))
+        r2 += '<span class="ins">{}</span>'.format(getChar(txt2, pos2[i]))
       elif pos2[i] < 0:
-        r1 += '<span class="ins">'+txt1[pos1[i]]+'</span>'
-        r2 += '<span class="missing">⋄</span>'
+        r1 += '<span class="ins">{}</span>'.format(getChar(txt1, pos1[i]))
+        r2 += '<span class="missing">{}</span>'.format(getChar(txt2, pos2[i]))
       else:
         r1 += '<span class="diff">'+txt1[pos1[i]]+'</span>'
         r2 += '<span class="diff">'+txt2[pos2[i]]+'</span>'
@@ -122,7 +129,7 @@ def levenshtein(txt1, txt2):
   removeDoubles(r2)
   r1.reverse()
   r2.reverse()
-  #print(diff, r1, r2)
+  #print(diff, r1, r2, len(r1), len(r2))
   return diff, r1, r2
 
 def diff(workDir):

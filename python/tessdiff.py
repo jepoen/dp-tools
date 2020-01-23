@@ -1,17 +1,140 @@
 #!/usr/bin/env python3
 import argparse, os, re, sys
+from jinja2 import Template
 
+HTML = '''<!DOCTYPE html>
+<html>
+<head>
+<title>Diffs Tesseract-Calamari</title>
+<meta charset="UTF-8" />
+<style>
+.diff {
+  background-color: #ffcfcf;
+}
+.missing {
+  background-color: yellow;
+}
+.ins {
+  background-color: #afffaf;
+}
+
+th {
+  align: left;
+  background-color: #c7c7c7;
+  font-weight: normal;
+  font-style: italic;
+  font-size: small;
+}
+.code {
+  font-family: monospace;
+}
+</style>
+<body>
+<p>
+Zeilen: {{summary.lines}}, Zeilen mit Fehlern: {{summary.errLines}}
+</p>
+{% for e in summary.entries %}
+<div>
+<a href="{{e.img}}">{{e.img}}</a>: {{e.diff}}<br />
+<table>
+<tr><th>Tesseract</th><td class="code">{{e.tesseract}}</td></tr>
+<tr><th>Calamari</th><td class="code">{{e.calamari}}</td></tr>
+</table>
+</div>
+{% endfor %}
+</body>
+</html>
+'''
 def cleanCalamari(txt):
   txt = txt.replace('ſ', 's')
   txt = txt.replace(',,', '»')
   txt = txt.replace('\'\'', '«')
   return txt
 
-def diff(workDir, outfile):
+def removeDoubles(l):
+  last = None
+  for i in range(len(l)):
+    if l[i] == last:
+      l[i] = -1
+    else:
+      last = l[i]
+
+def buildTexts(txt1, pos1, txt2, pos2):
+  r1 = ''
+  r2 = ''
+  for i in range(len(pos1)):
+    if txt1[pos1[i]] == txt2[pos2[i]]:
+      if pos1[i] < 0:
+        r1 += '<span class="missing">⋄</span>'
+        r2 += '<span class="missing">⋄</span>'
+      else:
+        r1 += txt1[pos1[i]]
+        r2 += txt2[pos2[i]]
+    else:
+      if pos1[i] < 0:
+        r1 += '<span class="missing">⋄</span>'
+        r2 += '<span class="ins">'+txt2[pos2[i]]+'</span>'
+      elif pos2[i] < 0:
+        r1 += '<span class="ins">'+txt1[pos1[i]]+'</span>'
+        r2 += '<span class="missing">⋄</span>'
+      else:
+        r1 += '<span class="diff">'+txt1[pos1[i]]+'</span>'
+        r2 += '<span class="diff">'+txt2[pos2[i]]+'</span>'
+  return r1, r2
+
+def levenshtein(txt1, txt2):
+  l1 = len(txt1)
+  l2 = len(txt2)
+  w = l2+1
+  dist = [(None, None)]*(l1+1)*(l2+1)
+  for i in range(l2+1):
+    dist[i] = (i, -1)
+  for i in range(l1+1):
+    dist[w*i] = (i, -1)
+  for i1 in range(1, l1+1):
+    for i2 in range(1, l2+1):
+      p = w*i1 + i2
+      p1 = w*(i1-1) + (i2 - 1)
+      p2 = w*(i1-1) + i2
+      p3 = w*i1 + (i2 - 1)
+      if txt1[i1-1] == txt2[i2-1]:
+        d1 = dist[p1][0]
+      else:
+        d1 = dist[p1][0] + 1
+      d2 = dist[p2][0] + 1
+      d3 = dist[p3][0] + 1
+      if d1 <= d2 and d1 <= d3:
+        dist[p] = (d1, p1)
+      elif d2 <= d1 and d2 <= d3:
+        dist[p] = (d2, p2)
+      else:
+        dist[p] = (d3, p3)
+  # reconstruct path
+  r1 = list()
+  r2 = list()
+  p = w*l1 + l2
+  diff = dist[p][0]
+  while dist[p][1] >= 0:
+    r1.append(p // w - 1)
+    r2.append(p % w - 1)
+    p = dist[p][1]
+  removeDoubles(r1)
+  removeDoubles(r2)
+  r1.reverse()
+  r2.reverse()
+  #print(diff, r1, r2)
+  return diff, r1, r2
+
+def diff(workDir):
+  entries = list()
   reNr = re.compile(r'^l-([0-9]{3}).pred.txt$')
+  lineCnt = 0
+  errLineCnt = 0
+  sumDiff = 0
   for dirName in sorted(os.listdir(workDir)):
     path = os.path.join(workDir, dirName)
     if not os.path.isdir(path): continue
+    print('Dir:', path)
     for fileName in sorted(os.listdir(path)):
       m = reNr.match(fileName)
       if m is None: continue
@@ -24,11 +147,33 @@ def diff(workDir, outfile):
         calamariText = cleanCalamari(calamariText)
       with open(tessFileName) as fi:
         tessText = fi.read()
+      lineCnt += 1
       if tessText != calamariText:
         print(os.path.join(path, fileName))
         print('Tesseract:', tessText)
         print('Calamari :', calamariText)
-      
+        diff, r1, r2 = levenshtein(tessText, calamariText)
+        errLineCnt += 1
+        sumDiff += diff
+        #print(diff, r1, r2)
+        html1, html2 = buildTexts(tessText, r1, calamariText, r2)
+        #print('Tesseract:', html1)
+        #print('Calamari :', html2)
+        imgFile = os.path.join(path, 'l-{}.png'.format(m.group(1)))
+        entries.append({'diff': diff,
+                        'tesseract': html1,
+                        'calamari': html2,
+                        'img': imgFile})
+  return {'entries': entries,
+          'lines': lineCnt,
+          'errLines': errLineCnt,
+          'sumdiff': sumDiff}
+
+def buildPage(outFile, res):
+  tpl = Template(HTML)
+  with open(outFile, "w") as fo:
+    fo.write(tpl.render(summary=res))
+
 def run():
   parser = argparse.ArgumentParser(
     description='Difference file between tesseract and calamari')
@@ -43,7 +188,9 @@ def run():
     os.exit(1)
   if args['out'] is None:
     args['out'] = 'diff.html'
-  diff(args['workdir'], args['out'])
+  res = diff(args['workdir'])
+  buildPage(args['out'], res)
+
 if __name__ == '__main__':
   run()
 

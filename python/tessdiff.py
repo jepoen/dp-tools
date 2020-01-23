@@ -70,23 +70,25 @@ def buildTexts(txt1, pos1, txt2, pos2):
   r1 = ''
   r2 = ''
   for i in range(len(pos1)):
-    if txt1[pos1[i]] == txt2[pos2[i]]:
+    c1 = getChar(txt1, pos1[i])
+    c2 = getChar(txt2, pos2[i])
+    if c1 == c2:
       if pos1[i] < 0:
-        r1 += '<span class="missing">{}</span>'.format(getChar(txt1, pos1[i]))
-        r2 += '<span class="missing">{}</span>'.format(getChar(txt2, pos2[i]))
+        r1 += '<span class="missing">{}</span>'.format(c1)
+        r2 += '<span class="missing">{}</span>'.format(c2)
       else:
-        r1 += txt1[pos1[i]]
-        r2 += txt2[pos2[i]]
+        r1 += c1
+        r2 += c2
     else:
       if pos1[i] < 0:
-        r1 += '<span class="missing">{}</span>'.format(getChar(txt1, pos1[i]))
-        r2 += '<span class="ins">{}</span>'.format(getChar(txt2, pos2[i]))
+        r1 += '<span class="missing">{}</span>'.format(c1)
+        r2 += '<span class="ins">{}</span>'.format(c2)
       elif pos2[i] < 0:
-        r1 += '<span class="ins">{}</span>'.format(getChar(txt1, pos1[i]))
-        r2 += '<span class="missing">{}</span>'.format(getChar(txt2, pos2[i]))
+        r1 += '<span class="ins">{}</span>'.format(c1)
+        r2 += '<span class="missing">{}</span>'.format(c2)
       else:
-        r1 += '<span class="diff">'+txt1[pos1[i]]+'</span>'
-        r2 += '<span class="diff">'+txt2[pos2[i]]+'</span>'
+        r1 += '<span class="diff">{}</span>'.format(c1)
+        r2 += '<span class="diff">{}</span>'.format(c2)
   return r1, r2
 
 def levenshtein(txt1, txt2):
@@ -121,10 +123,13 @@ def levenshtein(txt1, txt2):
   r2 = list()
   p = w*l1 + l2
   diff = dist[p][0]
-  while dist[p][1] >= 0:
+  while p >= 0:
     r1.append(p // w - 1)
     r2.append(p % w - 1)
     p = dist[p][1]
+  if r1[-1] == r2[-1]: # == -1
+    r1 = r1[:-1]
+    r2 = r2[:-1]
   removeDoubles(r1)
   removeDoubles(r2)
   r1.reverse()
@@ -162,7 +167,7 @@ def diff(workDir):
         diff, r1, r2 = levenshtein(tessText, calamariText)
         errLineCnt += 1
         sumDiff += diff
-        #print(diff, r1, r2)
+        print(diff, r1, r2, len(r1), len(r2))
         html1, html2 = buildTexts(tessText, r1, calamariText, r2)
         #print('Tesseract:', html1)
         #print('Calamari :', html2)

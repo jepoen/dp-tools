@@ -97,9 +97,9 @@ def levenshtein(txt1, txt2):
   w = l2+1
   dist = [(None, None)]*(l1+1)*(l2+1)
   for i in range(l2+1):
-    dist[i] = (i, -1)
+    dist[i] = (i, i-1)
   for i in range(l1+1):
-    dist[w*i] = (i, -1)
+    dist[w*i] = (i, w*(i-1))
   for i1 in range(1, l1+1):
     for i2 in range(1, l2+1):
       p = w*i1 + i2
@@ -123,13 +123,10 @@ def levenshtein(txt1, txt2):
   r2 = list()
   p = w*l1 + l2
   diff = dist[p][0]
-  while p >= 0:
+  while p > 0:
     r1.append(p // w - 1)
     r2.append(p % w - 1)
     p = dist[p][1]
-  if r1[-1] == r2[-1]: # == -1
-    r1 = r1[:-1]
-    r2 = r2[:-1]
   removeDoubles(r1)
   removeDoubles(r2)
   r1.reverse()
@@ -167,7 +164,7 @@ def diff(workDir):
         diff, r1, r2 = levenshtein(tessText, calamariText)
         errLineCnt += 1
         sumDiff += diff
-        print(diff, r1, r2, len(r1), len(r2))
+        #print(diff, r1, r2, len(r1), len(r2))
         html1, html2 = buildTexts(tessText, r1, calamariText, r2)
         #print('Tesseract:', html1)
         #print('Calamari :', html2)

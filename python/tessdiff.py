@@ -32,7 +32,7 @@ th {
 <body>
 <p>
 Zeilen: {{summary.lines}}, Zeilen mit Differenzen: {{summary.errLines}},
-Summe aller Distanzen: {{summary.sumDiff}}
+Summe aller Distanzen: {{summary.sumdiff}}
 </p>
 {% for e in summary.entries %}
 <div>

@@ -27,31 +27,28 @@ def run():
     description='Collect ground truth files')
   parser.add_argument('--workdir', '-w',
     help='Work\' directory')
-  parser.add_argument('--traindir', '-t',
-    help='Training output directory')
-  parser.add_argument('--valdir', '-v',
-    help='Validation output directory')
+  parser.add_argument('--outdir', '-o', default='.',
+    help='output directory (<outdir>/train <outdir>/validate <outdir>/test)')
+  parser.add_argument('--validsplit', '-v', default='0.2',
+    help='Validation split (ratio)')
+  parser.add_argument('--testsplit', '-t', default='0.2',
+    help='Test split (ratio)')
+  parser.add_argument('--clean', '-c', nargs='?',
+    help='Clean output directory', const=True, default=False)
   parser.add_argument('--prefix', '-p',
     help='file prefix')
-  parser.add_argument('--valsize', '-s',
-    help='size of validation set (%)')
   nargs = parser.parse_args()
   args = vars(nargs)
+  print(args)
   if args['workdir'] is None:
     print('Workdir missing')
-    sys.exit(1)
-  if args['traindir'] is None:
-    print('Traindir missing')
-    sys.exit(1)
-  if args['valdir'] is None:
-    print('Validation dir missing')
     sys.exit(1)
   if args['prefix'] is None:
     now = datetime.datetime.now()
     args['prefix'] = now.strftime('%Y-%m-%dT%H:%M')
-  if args['valsize'] is None:
-    args['valsize'] = 20
-  os.makedirs(args['traindir'], exist_ok=True)
+  os.makedirs(os.path.join(args['outdir'], 'train'), exist_ok=True)
+  os.makedirs(os.path.join(args['outdir'], 'test'), exist_ok=True)
+  os.makedirs(os.path.join(args['outdir'], 'valid'), exist_ok=True)
   os.makedirs(args['valdir'], exist_ok=True)
   imgTxtList = collectFiles(args['workdir'])
   random.shuffle(imgTxtList)

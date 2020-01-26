@@ -15,6 +15,11 @@ def collectFiles(workdir):
       result.append((gtFile, imgFile))
   return result
 
+def rmFiles(basedir, subdir):
+  dirName = os.path.join(basedir, subdir)
+  for f in os.listdir(dirName):
+    os.remove(os.path.join(dirName, f))
+
 def copyFiles(fileList, workDir, tgtDir, prefix):
   for gtFile, imgFile in fileList:
     newGtFile = prefix+'-'+gtFile.replace('/', '-')
@@ -33,7 +38,7 @@ def run():
     help='Validation split (ratio)')
   parser.add_argument('--testsplit', '-t', default='0.2',
     help='Test split (ratio)')
-  parser.add_argument('--clean', '-c', nargs='?',
+  parser.add_argument('--clean', '-c', action='store_const',
     help='Clean output directory', const=True, default=False)
   parser.add_argument('--prefix', '-p',
     help='file prefix')
@@ -46,16 +51,27 @@ def run():
   if args['prefix'] is None:
     now = datetime.datetime.now()
     args['prefix'] = now.strftime('%Y-%m-%dT%H:%M')
-  os.makedirs(os.path.join(args['outdir'], 'train'), exist_ok=True)
-  os.makedirs(os.path.join(args['outdir'], 'test'), exist_ok=True)
-  os.makedirs(os.path.join(args['outdir'], 'valid'), exist_ok=True)
-  os.makedirs(args['valdir'], exist_ok=True)
+  trainDir = os.path.join(args['outdir'], 'train')
+  validDir = os.path.join(args['outdir'], 'valid')
+  testDir = os.path.join(args['outdir'], 'test')
+  os.makedirs(trainDir, exist_ok=True)
+  os.makedirs(testDir, exist_ok=True)
+  os.makedirs(validDir, exist_ok=True)
+  if args['clean']:
+    for dirName in ['train', 'test', 'valid']:
+      rmFiles(args['outdir'], dirName)
+  testSplit = float(args['testsplit'])
+  validSplit = float(args['validsplit'])
   imgTxtList = collectFiles(args['workdir'])
   random.shuffle(imgTxtList)
-  splitIdx = len(imgTxtList)*args['valsize']//100
-  print('Validation:', splitIdx, 'Training:', len(imgTxtList)-splitIdx)
-  copyFiles(imgTxtList[splitIdx:], args['workdir'], args['traindir'], args['prefix'])
-  copyFiles(imgTxtList[:splitIdx], args['workdir'], args['valdir'], args['prefix'])
+  validIdx = int(len(imgTxtList)*validSplit)
+  testIdx = int(len(imgTxtList)*(validSplit+testSplit))
+  print('Validation:', validIdx)
+  print('Test:      ', testIdx-validIdx)
+  print('Training:', len(imgTxtList)-testIdx)
+  copyFiles(imgTxtList[:validIdx], args['workdir'], validDir, args['prefix'])
+  copyFiles(imgTxtList[validIdx:testIdx], args['workdir'], testDir, args['prefix'])
+  copyFiles(imgTxtList[testIdx:], args['workdir'], trainDir, args['prefix'])
 
 if __name__ == '__main__':
   run()

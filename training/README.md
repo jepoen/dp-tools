@@ -39,6 +39,46 @@ Persönlicher Eindruck: Dieses Modell ist genauer als das mitgelieferte
 Camari-Modell (zumindest bei Verwendung ohne Voting)
 TODO: Training Voting-Modell
 
+## OCR
+
+Derzeitiger Workflow:
+
+* Vorbehandlung mit Scantailor (Ausgabe 600 dpi, 1 bit Farbtiefe)
+
+* Skalieren auf 50%
+  <pre>
+  convert -scale 50% -depth 1 srcImage tgtImage
+  </pre>
+
+* Erzeugen der Zeilenboxen
+  * kraken:
+  <pre>
+  kraken -i imageFile segmentFile segment
+  </pre>
+  
+  * Tesseract (Installation mit Trainingssupport erforderlich)
+  <pre>
+  tesseract imageFile baseFilename lstmbox
+  </pre>
+  Umwandlung der Boxfiles in JSON-File wie kraken
+
+* Vorhersage mit Calamari
+  <pre>
+  calamari-predict --checkpoint myModel/best.ckpt \
+    --files lineImageFiles
+  </pre>
+
+* Zusammensetzen der Zeilen mit Heuristik
+
+* Vergleich mit Tesseract-Vorhersage und evt. Modell anpassen
+
+
+* Zeilen zusammensetzen (eigenes Tool)
+
+<pre>
+kraken-join-lines.py segmentFile.json textFile.txt -d imgLinesDir
+</pre>
+
 ## Modell anpassen
 
 * Voraussetzung: Bilder von Einzelzeilen (1 Bit Farbtiefe) +
@@ -50,41 +90,4 @@ calamari-train --weights myModel/best.ckpt \
                --validation=myValidation/*.png
 </pre>
 
-## OCR
-
-* Installation ohne Anaconda mit Python3-venv
-
-* Installation `tensorflow=2.0.0` (ohne GPU-Support)
-
-* Installation von `calamari_ocr`, `kraken` in dieser Umgebung
-
-* Scantailor-Ausgabe auf 300 dpi, Tiefe 1 runterskalieren
-
-<pre>
-convert -scale 50% -depth1 srcImage tgtImage
-</pre>
-
-* Seite segmentieren mit kraken
-
-<pre>
-kraken -i imageFile segmentFile segment
-</pre>
-
-* Seite zerlegen in Zeilen (eigenes Tool)
-
-<pre>
-kraken-img-split.py segmentFile.json imageFile -d imgLinesDir
-</pre>
-
-* Vorhersage
-
-<pre>
-calamari-predict --checkpoint model.ckpt --files imgLinesDir/line-\*.png
-</pre>
-
-* Zeilen zusammensetzen (eigenes Tool)
-
-<pre>
-kraken-join-lines.py segmentFile.json textFile.txt -d imgLinesDir
-</pre>
 

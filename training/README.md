@@ -12,20 +12,43 @@ Trainingstexte mit korrekten Umbrüchen
 
 * Installation Anaconda mit `tensorflow_gpu` 2.0.0
 * Zusätzlich war Installation von `libcuda1` erforderlich
-* Installation von virtueller Umgebung für Calamari:
+* Anaconda-Umgebung aktivieren:
   <pre>
-  conda env create -f envirnonment_master_gpu.yml
+  source <condaDir>/bin/activate
   </pre>
+* Installation von virtueller Umgebung für Calamari (falls gewünscht) und
+  aktivieren:
+  <pre>
+  conda env create -f environment_master_gpu.yml
+  conda activate ...
+  </pre>
+  Alternativ Calamari direkt in Anaconda-Umgebung installieren.
 
-Trainingsdaten von `https://github.com/jze/ocropus-model_fraktur`
+## Training mit Ocropus-Daten
 
 <pre>
-calamari-train --files ocropus-model_fraktur-master/training/*.bin.png --checkpoint_frequency=1000 --output_dir=calamari-models/ --validation=ocropus-model_fraktur-master/testing/*.bin.png --early_stopping_frequency=1000
+calamari-train --files ocropus-model_fraktur-master/training/*.bin.png \
+               --output_dir=myModel/ \
+               --validation=ocropus-model_fraktur-master/testing/*.bin.png
 </pre>
+Achtung: Testdaten als Validation-Daten missbraucht!
 
 ca. 30'000 Schritte
 
+Persönlicher Eindruck: Dieses Modell ist genauer als das mitgelieferte
+Camari-Modell (zumindest bei Verwendung ohne Voting)
 TODO: Training Voting-Modell
+
+## Modell anpassen
+
+* Voraussetzung: Bilder von Einzelzeilen (1 Bit Farbtiefe) +
+Ground-Truth-Textdatei mit gleichem Basisnamen
+<pre>
+calamari-train --weights myModel/best.ckpt \
+               --output_dir=improved/ \
+               --files myTraining/*.png
+               --validation=myValidation/*.png
+</pre>
 
 ## OCR
 

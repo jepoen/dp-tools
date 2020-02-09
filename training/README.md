@@ -1,12 +1,23 @@
 # Ocropus Trainingsdaten Fraktur
 
-https://github.com/tmbdev/ocropy/wiki
 
-https://github.com/jze/ocropus-model_fraktur
+## Trainingsdaten und Modelle
 
-http://www.deutschestextarchiv.de/
+* data/ocropus-train-data.zip: Original-Trainingsdaten Ocropus
+  https://github.com/jze/ocropus-model_fraktur
+* data/my-train-data.zip: Zusätzliche eigen Trainingsdaten
+* model/ocropus_base.ckpt: Modell mit Ocropus-Daten
+* model/mymodel-best.ckpt: Modell mit Ocropus- und eigenen Daten
 
-Trainingstexte mit korrekten Umbrüchen
+Eigene Daten:
+
+* Wustmann: Allerhand Sprachdummheiten.
+* Rieß: Aus grauen Mauern und grünen Weiten.
+
+Weitere mögliche Datenquellen:
+
+* https://github.com/tmbdev/ocropy/wiki
+* http://www.deutschestextarchiv.de/
 
 ## Installation für Training mit Calamari
 

@@ -23,56 +23,82 @@ Weitere mögliche Datenquellen:
 
 * Installation Anaconda mit `tensorflow_gpu` 2.0.0
 * Zusätzlich war Installation von `libcuda1` erforderlich
-* Installation von virtueller Umgebung für Calamari:
+* Anaconda-Umgebung aktivieren:
   <pre>
-  conda env create -f envirnonment_master_gpu.yml
+  source <condaDir>/bin/activate
   </pre>
+* Installation von virtueller Umgebung für Calamari (falls gewünscht) und
+  aktivieren:
+  <pre>
+  conda env create -f environment_master_gpu.yml
+  conda activate ...
+  </pre>
+  Alternativ Calamari direkt in Anaconda-Umgebung installieren.
 
-Trainingsdaten von `https://github.com/jze/ocropus-model_fraktur`
+## Training mit Ocropus-Daten
 
 <pre>
-calamari-train --files ocropus-model_fraktur-master/training/*.bin.png --checkpoint_frequency=1000 --output_dir=calamari-models/ --validation=ocropus-model_fraktur-master/testing/*.bin.png --early_stopping_frequency=1000
+calamari-train --files ocropus-model_fraktur-master/training/*.bin.png \
+               --output_dir=myModel/ \
+               --validation=ocropus-model_fraktur-master/testing/*.bin.png
 </pre>
+Achtung: Testdaten als Validation-Daten missbraucht!
 
 ca. 30'000 Schritte
 
+Persönlicher Eindruck: Dieses Modell ist genauer als das mitgelieferte
+Camari-Modell (zumindest bei Verwendung ohne Voting)
 TODO: Training Voting-Modell
 
 ## OCR
 
-* Installation ohne Anaconda mit Python3-venv
+Derzeitiger Workflow:
 
-* Installation `tensorflow=2.0.0` (ohne GPU-Support)
+* Vorbehandlung mit Scantailor (Ausgabe 600 dpi, 1 bit Farbtiefe)
 
-* Installation von `calamari_ocr`, `kraken` in dieser Umgebung
+* Skalieren auf 50%
+  <pre>
+  convert -scale 50% -depth 1 srcImage tgtImage
+  </pre>
 
-* Scantailor-Ausgabe auf 300 dpi, Tiefe 1 runterskalieren
+* Erzeugen der Zeilenboxen
+  * kraken:
+  <pre>
+  kraken -i imageFile segmentFile segment
+  </pre>
+  
+  * Tesseract (Installation mit Trainingssupport erforderlich)
+  <pre>
+  tesseract imageFile baseFilename lstmbox
+  </pre>
+  Umwandlung der Boxfiles in JSON-File wie kraken
 
-<pre>
-convert -scale 50% -depth1 srcImage tgtImage
-</pre>
+* Vorhersage mit Calamari
+  <pre>
+  calamari-predict --checkpoint myModel/best.ckpt \
+    --files lineImageFiles
+  </pre>
 
-* Seite segmentieren mit kraken
+* Zusammensetzen der Zeilen mit Heuristik
 
-<pre>
-kraken -i imageFile segmentFile segment
-</pre>
+* Vergleich mit Tesseract-Vorhersage und evt. Modell anpassen
 
-* Seite zerlegen in Zeilen (eigenes Tool)
-
-<pre>
-kraken-img-split.py segmentFile.json imageFile -d imgLinesDir
-</pre>
-
-* Vorhersage
-
-<pre>
-calamari-predict --checkpoint model.ckpt --files imgLinesDir/line-\*.png
-</pre>
 
 * Zeilen zusammensetzen (eigenes Tool)
 
 <pre>
 kraken-join-lines.py segmentFile.json textFile.txt -d imgLinesDir
 </pre>
+
+## Modell anpassen
+
+* Voraussetzung: Bilder von Einzelzeilen (1 Bit Farbtiefe) +
+Ground-Truth-Textdatei mit gleichem Basisnamen
+<pre>
+calamari-train --weights myModel/best.ckpt \
+               --output_dir=improved/ \
+               --files myTraining/*.png
+               --validation=myValidation/*.png
+</pre>
+
 

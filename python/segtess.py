@@ -79,7 +79,7 @@ def findImages(imgDir, workDir):
 def splitImageFiles(workDir, pgImgFiles):
   for pgNr, imgFile in pgImgFiles:
     pageDir = os.path.join(workDir, pgNr)
-    pageFile = os.path.join(pageDir, pgNr+'.png')
+    pageFile = os.path.join(pageDir, 'page.png')
     lstmBaseFile = os.path.join(pageDir, pgNr)
     lstmFile = lstmBaseFile + '.box'
     os.makedirs(pageDir, exist_ok=True)

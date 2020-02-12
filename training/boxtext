@@ -1,0 +1,5 @@
+# This config file should be used with other cofig files which creates renderers.
+# usage example: tesseract eurotext.tif eurotext txt hocr pdf
+# this configuration creates text output + bounding boxes
+tessedit_create_txt 1
+tessedit_create_boxfile 1

@@ -17,7 +17,7 @@ Eigene Daten:
 Weitere mögliche Datenquellen:
 
 * https://github.com/tmbdev/ocropy/wiki
-* http://www.deutschestextarchiv.de/
+* http://www.deutschestextarchiv.de/ (teilweise korrekte Zeilenumbrüche)
 
 ## Installation für Training mit Calamari
 

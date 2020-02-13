@@ -23,6 +23,7 @@ import (
   _ "io/ioutil"
   "image"
   "image/color"
+  "image/draw"
   "image/png"
   "log"
   "os"
@@ -122,6 +123,16 @@ func readParams() *Params {
 
 func (box *Box) isEmpty() bool {
   return box.y1-box.y0 == 0
+}
+
+func nonEmptyBoxes(boxes []Box) []Box {
+  res := []Box{}
+  for _, b := range boxes {
+    if !b.isEmpty() {
+      res = append(res, b)
+    }
+  }
+  return res;
 }
 
 func (box *Box) wGlyph() int {
@@ -277,12 +288,15 @@ func medStartPos(boxLines []BoxLine) (Quartiles, error) {
   return intQuartiles(starts), nil
 }
 
-func processBoxes(lines []string, boxes []Box) []Box {
+func processBoxes(lines []string, boxes []Box) []BoxLine {
   boxes = matchBoxes(boxes, lines)
   text := strings.Join(lines, "\n")
   boxText := boxes2text(boxes)
   log.Println("isEqual: ", text==boxText)
-  boxLines := boxes2lines(boxes)
+  return boxes2lines(boxes)
+}
+
+func boundingBoxes(boxLines []BoxLine) []Box {
   res := []Box{}
   for _, boxLine := range(boxLines) {
     bbox := boundingBox(boxLine.boxes)
@@ -478,16 +492,41 @@ func drawV(mm *image.Gray, x, y0, y1 int) {
   }
 }
 
-func splitImage(workDir string, lineboxes []Box, m image.Image) {
+func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
+    m image.Image) {
   xx0 := m.Bounds().Min.X
   yy1 := m.Bounds().Max.Y
   mm := m.(*image.Gray)
+  white := color.Gray{255}
   i := 0
-  for _, box := range lineboxes {
+  for j, box := range lineBboxes {
     if box.isEmpty() { continue }
-    subImg := mm.SubImage(image.Rectangle{
-      image.Point{box.x0+xx0, yy1-box.y1},image.Point{box.x1+xx0, yy1-box.y0},
-    })
+    subImg := image.NewGray(image.Rect(
+      0, 0, box.x1-box.x0, box.y1-box.y0),
+    )
+    draw.Draw(subImg, subImg.Bounds(), mm, image.Point{box.x0+xx0, yy1-box.y1},
+      draw.Src)
+    fullBoxes := nonEmptyBoxes(lineBoxes[j].boxes)
+    for k, b := range fullBoxes {
+      x0 := b.x0-box.x0
+      if k > 0 {
+        x0 = fullBoxes[k-1].x1 - box.x0 + 1
+      }
+      x1 := b.x1 - box.x0
+      if k < len(fullBoxes) -1 {
+        x1 = fullBoxes[k+1].x0 -box.x0 - 1
+      }
+      y0 := 0
+      y1 := box.y1 - b.y1 - 1
+      draw.Draw(subImg,
+        image.Rect(x0, y0, x1, y1),
+        &image.Uniform{white}, image.Point{0,0}, draw.Src)
+      y0 = box.y1 - b.y0 + 1
+      y1 = box.y1 - box.y0
+      draw.Draw(subImg,
+        image.Rectangle{image.Point{x0, y0}, image.Point{x1, y1}},
+        &image.Uniform{white}, image.ZP, draw.Src)
+    }
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)
@@ -499,7 +538,7 @@ func splitImage(workDir string, lineboxes []Box, m image.Image) {
     }
     i++
   }
-  for _, box := range lineboxes {
+  for _, box := range lineBboxes {
     if box.isEmpty() { continue }
     drawH(mm, box.x0+xx0, box.x1+xx0, yy1-box.y1)
     drawH(mm, box.x0+xx0, box.x1+xx0, yy1-box.y0)
@@ -537,14 +576,15 @@ func handleFile(base string, img string) {
   }
   lines, boxes := readBoxes(inFile, boxFile)
   lineboxes := processBoxes(lines, boxes)
-  log.Println("lineboxes", lineboxes)
+  lineBboxes := boundingBoxes(lineboxes)
+  log.Println("lineboxes", lineBboxes)
   err = os.MkdirAll(base, os.ModePerm)
   if err != nil {
     log.Fatal(err)
   }
-  writeJson(lineBoxFile, paraFile, lineboxes, m)
-  splitImage(base, lineboxes, m)
-  splitText(base, lineboxes)
+  writeJson(lineBoxFile, paraFile, lineBboxes, m)
+  splitImage(base, lineboxes, lineBboxes, m)
+  splitText(base, lineBboxes)
 }
 
 func main() {

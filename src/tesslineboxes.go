@@ -111,13 +111,37 @@ func (q Quartiles) String() string {
     q.min, q.q1, q.med, q.q3, q.max)
 }
 
+const UsageText = `Split png image into lines according to text and box tessact prediction
+Usage: %s options
+
+Output: <base>-preview.png
+        <base>-lines.json         line boxes
+        <base>-paragraphs.json    paragraphs
+        <base>/l-###.png          line images
+`
 func readParams() *Params {
+  flag.Usage = func() {
+    fmt.Fprintf(os.Stderr, UsageText, os.Args[0])
+    flag.PrintDefaults()
+  }
   params := &Params{}
   flag.StringVar(&params.ImgFileName, "image", "",
     "Image file name")
+  flag.StringVar(&params.ImgFileName, "i", "",
+    "Image file name (short)")
   flag.StringVar(&params.BaseFileName, "basename", "",
     "Base file name of text and box file")
+  flag.StringVar(&params.BaseFileName, "b", "",
+    "Base file name of text and box file (short)")
   flag.Parse()
+  if params.ImgFileName == "" {
+    flag.Usage()
+    log.Fatal("Image file missing")
+  }
+  if params.BaseFileName == "" {
+    flag.Usage()
+    log.Fatal("Base file name missing")
+  }
   return params
 }
 

@@ -5,6 +5,7 @@ def collectFiles(workdir):
   result = list()
   for pg in sorted(os.listdir(workdir)):
     pgDir = os.path.join(workdir, pg)
+    if not os.path.isdir(pgDir): continue
     for f in sorted(os.listdir(pgDir)):
       parts = f.split('.')
       if parts[-2] != 'gt' or parts[-1] != 'txt': continue

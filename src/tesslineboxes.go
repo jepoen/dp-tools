@@ -32,8 +32,6 @@ import (
   "sort"
   "strconv"
   "strings"
-  "unicode"
-  _ "unicode/utf8"
 )
 
 type Params struct {
@@ -81,23 +79,6 @@ type summary_t struct {
 
 var summary summary_t
 
-const (
-  FONT_NONE = iota
-  FONT_ANTIQUA
-  FONT_FRAKTUR
-)
-
-const (
-  OPT_FONT = iota
-  OPT_JOIN
-  OPT_RAW
-  OPT_RENUMBER
-  OPT_REPLACE_SF
-)
-
-func init() {
-}
-
 func str2map(s string) map[rune]bool {
   res := map[rune]bool{}
   for _, r := range(s) {
@@ -119,6 +100,7 @@ Output: <base>-preview.png
         <base>-paragraphs.json    paragraphs
         <base>/l-###.png          line images
 `
+
 func readParams() *Params {
   flag.Usage = func() {
     fmt.Fprintf(os.Stderr, UsageText, os.Args[0])
@@ -157,16 +139,6 @@ func nonEmptyBoxes(boxes []Box) []Box {
     }
   }
   return res;
-}
-
-func (box *Box) wGlyph() int {
-  if box.x0 < 0 { return -1 }
-  return box.x1 - box.x0
-}
-
-func (box *Box) hGlyph() int {
-  if box.y0 < 0 { return -1 }
-  return box.y1 - box.y0
 }
 
 func intQuartiles (vals []int) Quartiles {
@@ -316,7 +288,11 @@ func processBoxes(lines []string, boxes []Box) []BoxLine {
   boxes = matchBoxes(boxes, lines)
   text := strings.Join(lines, "\n")
   boxText := boxes2text(boxes)
-  log.Println("isEqual: ", text==boxText)
+  if text != boxText {
+    log.Println("different text and box prediction: ")
+    log.Println("text:", text)
+    log.Println("box: ", boxText)
+  }
   return boxes2lines(boxes)
 }
 
@@ -327,121 +303,6 @@ func boundingBoxes(boxLines []BoxLine) []Box {
     res = append(res, bbox)
   }
   return res
-}
-
-func NewSummary() summary_t {
-  var summary summary_t
-  summary.replacements = make(map[string]wordcount_t)
-  return summary
-}
-
-func LogAddReplacement(word string, newWord string) {
-  e, ok := summary.replacements[word]
-  if ok {
-    if e.word != newWord {
-      fmt.Println("Irregular replacement", word, e.word, newWord)
-    }
-    e.count++
-  } else {
-    e.word = newWord
-    e.count = 1
-  }
-  summary.replacements[word] = e
-}
-
-func containsRune(runes [] rune, r rune) bool {
-  for _, rr := range runes {
-    if rr == r { return true; }
-  }
-  return false;
-}
-
-func joinLines(text stringlist_t) stringlist_t {
-  caps := make([]rune, 0, 29)
-  for r := 'A'; r <= 'Z'; r++ { caps = append(caps, r) }
-  caps = append(caps, 'Ä', 'Ö', 'Ü')
-  // join char is ASCII = 1 byte
-  for i := 0; i < len(text)-1; i++ {
-    line := text[i]
-    pLast := len(line)-1
-    if pLast < 1 { continue }
-    if line[pLast] != '-' || line[pLast-1] == '-' { continue }
-    nline := text[i+1]
-    if len(strings.Trim(nline, " \t")) == 0 { continue }
-    pos := -1
-    var first rune
-    for i, r := range nline {
-      if i == 0 { first = r }
-      if r == ' ' {
-        pos = i
-	break
-      }
-    }
-    //fmt.Println("before:", line, "||", nline)
-    // don't remove dash if following line starts with cap
-    noRemove := 0
-    if containsRune(caps, first) { noRemove = 1 }
-    if pos > 0 {
-      text[i] = line[0:pLast+noRemove]+nline[0:pos]
-      text[i+1] = nline[pos+1:]
-    } else {
-      text[i] = line[0:pLast+noRemove]+nline
-      text[i+1] = ""
-    }
-    //fmt.Println("after:", text[i], "||", text[i+1])
-  }
-  return text
-}
-
-/**
- * Remove repeated blank lines
- */
-func removeBlankLines(text stringlist_t) stringlist_t {
-  ntext := make([]string, 0, len(text))
-  prevBlank := false
-  for _, line := range text {
-    line = strings.Trim(line, " \t")
-    if line == "" {
-      if prevBlank { continue }
-      prevBlank = true
-    } else {
-      prevBlank = false
-    }
-    ntext = append(ntext, line)
-  }
-  return ntext
-}
-
-/**
- * splits line into wordsep, word, and remaining line
- */
-func nextWord(line string) (string, string, string) {
-  sep := ""
-  word := ""
-  rest := ""
-  state := 0
-  wordStart := -1
-  wordEnd := -1
-  for i, r := range line {
-    if unicode.IsLetter(r) && state == 0 {
-      wordStart = i
-      sep = line[0:wordStart]
-      state = 1
-    } else if !unicode.IsLetter(r) && state == 1 {
-      wordEnd = i
-      word = line[wordStart:wordEnd]
-      rest = line[wordEnd:]
-      state = 2
-    }
-  }
-  if state == 0 {
-    return line, "", ""
-  } else if state == 1 {
-    word = line[wordStart:]
-    return sep, word, ""
-  } else {
-    return sep, word, rest
-  }
 }
 
 func buildJson(boxes []Box, imgBounds image.Rectangle) (JsBoxes, JsParas) {

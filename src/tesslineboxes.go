@@ -538,12 +538,53 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
     }
     i++
   }
-  for _, box := range lineBboxes {
+  for j, box := range lineBboxes {
     if box.isEmpty() { continue }
     drawH(mm, box.x0+xx0, box.x1+xx0, yy1-box.y1)
     drawH(mm, box.x0+xx0, box.x1+xx0, yy1-box.y0)
     drawV(mm, box.x0+xx0, yy1-box.y1, yy1-box.y0)
     drawV(mm, box.x1+xx0, yy1-box.y1, yy1-box.y0)
+    fullBoxes := nonEmptyBoxes(lineBoxes[j].boxes)
+    for k, b := range fullBoxes {
+      x0 := b.x0
+      y0 := b.y0
+      if k > 0 {
+        if fullBoxes[k-1].y0 <= b.y0 {
+          x0 = fullBoxes[k-1].x1
+        }
+        y0 = fullBoxes[k-1].y0
+      }
+      x1 := b.x1
+      y1 := b.y0
+      if k < len(fullBoxes)-1 {
+        if fullBoxes[k+1].y0 <= b.y0 {
+          x1 = fullBoxes[k+1].x0
+        }
+        y1 = fullBoxes[k+1].y0
+      }
+      drawH(mm, x0+xx0, x1+xx0, yy1-b.y0)
+      drawV(mm, x0+xx0, yy1-b.y0, yy1-y0)
+      drawV(mm, x1+xx0, yy1-b.y0, yy1-y1)
+      x0 = b.x0
+      y0 = b.y1
+      if k > 0 {
+        if fullBoxes[k-1].y1 >= b.y1 {
+          x0 = fullBoxes[k-1].x1
+        }
+        y0 = fullBoxes[k-1].y1
+      }
+      x1 = b.x1
+      y1 = b.y1
+      if k < len(fullBoxes)-1 {
+        if fullBoxes[k+1].y1 >= b.y1 {
+          x1 = fullBoxes[k+1].x0
+        }
+        y1 = fullBoxes[k+1].y1
+      }
+      drawH(mm, x0+xx0, x1+xx0, yy1-b.y1)
+      drawV(mm, x0+xx0, yy1-b.y1, yy1-y0)
+      drawV(mm, x1+xx0, yy1-b.y1, yy1-y1)
+    }
   }
   previewImgName := workDir+"-preview.png"
   if fo, err := os.Create(previewImgName); err != nil {

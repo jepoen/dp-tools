@@ -19,17 +19,21 @@ private:
     QLineEdit *myLineEdit;
     QDir myDir;
     QString myFileName;
-
+    bool myHasGt;
 public:
     LineEdit(const QDir &dir, const QString& fileName, QWidget *parent = Q_NULLPTR);
     void setScale(double scale);
     void setFont(const QFont font);
     QLineEdit *editor() const { return myLineEdit; }
+    QString handlePred(QString &text);
+    void setHasGt(bool val) { myHasGt = val; }
+    bool hasGt() const { return myHasGt; }
+signals:
+    void gtChanged();
 private slots:
     void save();
     void del();
 };
-
 
 
 #endif // LINEEDIT_H

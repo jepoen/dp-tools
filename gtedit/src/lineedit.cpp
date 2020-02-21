@@ -5,7 +5,7 @@
 
 LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
     QWidget(parent),
-    myDir(dir), myFileName(fileName)
+    myDir(dir), myFileName(fileName), myHasGt(false)
 {
     QVBoxLayout *layout = new QVBoxLayout();
     setLayout(layout);
@@ -15,7 +15,6 @@ LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
     QFileInfo predFile(dir, baseName+".pred.txt");
     qDebug()<<"gt"<<gtFile<<"pred"<<predFile;
     QFile file;
-    bool hasGt = false;
     bool hasPred = false;
     QPalette paletteEmpty;
     QString StyleGt = "QLabel {background-color: green;}";
@@ -26,14 +25,14 @@ LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
         file.setFileName(predFile.absoluteFilePath());
     }
     if (gtFile.exists()) {
-        hasGt = true;
+        myHasGt = true;
         qDebug()<<gtFile;
         file.setFileName(gtFile.absoluteFilePath());
     }
 
     QHBoxLayout *lControl = new QHBoxLayout();
     lFile = new QLabel(baseName);
-    if (hasGt) {
+    if (myHasGt) {
         lFile->setStyleSheet(StyleGt);
     } else if (hasPred) {
         lFile->setStyleSheet(StylePred);
@@ -63,7 +62,11 @@ LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
     layout->addWidget(lImg);
     myLineEdit = new QLineEdit();
     file.open(QFile::ReadOnly|QFile::Text);
-    myLineEdit->setText(QString(file.readAll()));
+    QString text = QString(file.readAll());
+    if (hasPred && !myHasGt) {
+        text = handlePred(text);
+    }
+    myLineEdit->setText(text);
     myLineEdit->setCursorPosition(0);
     layout->addWidget(myLineEdit);
     qDebug()<<"widget created";
@@ -92,6 +95,8 @@ void LineEdit::save() {
     fo.close();
     QString StyleGt = "QLabel {background-color: green;}";
     lFile->setStyleSheet(StyleGt);
+    myHasGt = true;
+    emit gtChanged();
 }
 
 void LineEdit::del() {
@@ -104,4 +109,12 @@ void LineEdit::del() {
     QFile fPred(predFile.absoluteFilePath());
     fPred.rename(delFile.absoluteFilePath());
     lFile->setStyleSheet("");
+}
+
+QString LineEdit::handlePred(QString &text) {
+    text = text.replace(",,,", "„‚");
+    text = text.replace(",,", "„");
+    text = text.replace("'''", "‘“");
+    text = text.replace("''", "“");
+    return text;
 }

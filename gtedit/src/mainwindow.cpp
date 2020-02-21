@@ -21,11 +21,17 @@ MainWindow::~MainWindow() {
 
 void MainWindow::createActions() {
     openAction = new QAction(tr("Open page"), this);
+    openAction->setShortcut(QKeySequence::Open);
     connect(openAction, SIGNAL(triggered()), this, SLOT(openPage()));
+    quitAction = new QAction(tr("Quit"), this);
+    quitAction->setShortcut(QKeySequence::Quit);
+    connect(quitAction, &QAction::triggered, this, &QApplication::quit);
     scale50Action = new QAction(tr("50%"), this);
+    scale50Action->setShortcut(Qt::CTRL+Qt::Key_5);
     scale50Action->setData(50);
     connect(scale50Action, SIGNAL(triggered()), this, SLOT(setScale()));
     scale100Action = new QAction(tr("100%"), this);
+    scale100Action->setShortcut(Qt::CTRL+Qt::Key_1);
     scale100Action->setData(100);
     connect(scale100Action, SIGNAL(triggered()), this, SLOT(setScale()));
 }
@@ -33,6 +39,7 @@ void MainWindow::createActions() {
 void MainWindow::createMenus() {
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(openAction);
+    fileMenu->addAction(quitAction);
     QMenu *viewMenu = menuBar()->addMenu(("&View"));
     viewMenu->addAction(scale50Action);
     viewMenu->addAction(scale100Action);
@@ -49,6 +56,8 @@ void MainWindow::createMainWidget() {
 void MainWindow::createStatusBar() {
     lCurrentChar = new QLabel();
     statusBar()->addWidget(lCurrentChar);
+    lGtLines = new QLabel();
+    statusBar()->addWidget(lGtLines);
 }
 
 void MainWindow::showPage(const QString& dirName) {
@@ -77,6 +86,7 @@ void MainWindow::showPage(const QString& dirName) {
         layout->addWidget(le);
         myLineEdits.append(le);
         connect(le->editor(), SIGNAL(cursorPositionChanged(int, int)), this, SLOT(getCurrentChar(int, int)));
+        connect(le, &LineEdit::gtChanged, this, &MainWindow::countGtLines);
     }
     if (myLineEdits.size() > 0) {
         qDebug()<<"Set focus";
@@ -86,6 +96,7 @@ void MainWindow::showPage(const QString& dirName) {
     }
     widget->setLayout(layout);
     mainWidget->setWidget(widget);
+    countGtLines();
 }
 
 void MainWindow::openPage() {
@@ -112,6 +123,14 @@ void MainWindow::getCurrentChar(int /*oldPos*/, int newPos) {
     QChar c = ed->text().at(newPos);
     qDebug()<<c;
     lCurrentChar->setText(QString("%1 %2").arg(c).arg(c.unicode(), 4, 16));
+}
+
+void MainWindow::countGtLines() {
+    int count = 0;
+    for (const LineEdit* le: myLineEdits) {
+        if (le->hasGt()) count++;
+    }
+    lGtLines->setText(tr("GT lines: %1").arg(count));
 }
 
 void MainWindow::setScale() {

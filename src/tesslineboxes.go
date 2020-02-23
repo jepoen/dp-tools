@@ -155,13 +155,13 @@ func boundingBox(boxes []Box) Box {
     return Box{"", 0, 0, 0, 0}
   }
   res := boxes[0]
-  for _, b := range boxes {
+  for _, b := range boxes[1:len(boxes)] {
+    res.glyph += b.glyph
     if b.isEmpty() { continue }
     if b.x0 < res.x0 { res.x0 = b.x0 }
     if b.y0 < res.y0 { res.y0 = b.y0 }
     if b.x1 > res.x1 { res.x1 = b.x1 }
     if b.y1 > res.y1 { res.y1 = b.y1 }
-    res.glyph += b.glyph
   }
   return res
 }

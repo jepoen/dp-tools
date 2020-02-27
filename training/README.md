@@ -12,7 +12,9 @@
 Eigene Daten:
 
 * Wustmann: Allerhand Sprachdummheiten.
-* Rieß: Aus grauen Mauern und grünen Weiten.
+* Rieß: Aus grauen Mauern und grünen Weiten. Sächsischer Heimatschutz 1924.
+* Wiedemann: Sprachbilder nach bestimmten Sprachregeln.
+  A. Oehmigke's Verlag 1874.
 
 Weitere mögliche Datenquellen:
 

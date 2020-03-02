@@ -504,7 +504,9 @@ func nextWord(line string) (string, string, string) {
 func handleSepFrak(sep string) string {
   ns := sep
   patterns := [][]string{
+    {`,,,`, `»>`},
     {`,,`, `»`},
+    {`'''`, `'«`},
     {`''`, `«`},
     {` +([!?:,;:i«)])`, `$1`},
     {`([»(]) +`, `$1`},

@@ -37,6 +37,7 @@ import (
 type Params struct {
   ImgFileName string
   BaseFileName string
+  CutLines bool
 }
 
 type Quartiles struct {
@@ -115,6 +116,10 @@ func readParams() *Params {
     "Base file name of text and box file")
   flag.StringVar(&params.BaseFileName, "b", "",
     "Base file name of text and box file (short)")
+  flag.BoolVar(&params.CutLines, "cutlines", false,
+    "Cut lines with glyph boxes")
+  flag.BoolVar(&params.CutLines, "c", false,
+    "Cut lines with glyph boxes (short)")
   flag.Parse()
   if params.ImgFileName == "" {
     flag.Usage()
@@ -377,12 +382,80 @@ func drawV(mm *image.Gray, x, y0, y1 int) {
   }
 }
 
+func cutImage(img *image.Gray, box Box, lineBoxes []Box) {
+  white := color.Gray{255}
+  fullBoxes := nonEmptyBoxes(lineBoxes)
+  for k, b := range fullBoxes {
+    x0 := b.x0-box.x0
+    if k > 0 {
+      x0 = fullBoxes[k-1].x1 - box.x0 + 1
+    }
+    x1 := b.x1 - box.x0
+    if k < len(fullBoxes) -1 {
+      x1 = fullBoxes[k+1].x0 -box.x0 - 1
+    }
+    y0 := 0
+    y1 := box.y1 - b.y1 - 1
+    draw.Draw(img,
+      image.Rect(x0, y0, x1, y1),
+      &image.Uniform{white}, image.Point{0,0}, draw.Src)
+    y0 = box.y1 - b.y0 + 1
+    y1 = box.y1 - box.y0
+    draw.Draw(img,
+      image.Rectangle{image.Point{x0, y0}, image.Point{x1, y1}},
+      &image.Uniform{white}, image.ZP, draw.Src)
+  }
+}
+
+func drawCutLines(mm *image.Gray, xx0, yy1 int, box Box, lineBoxes []Box) {
+  fullBoxes := nonEmptyBoxes(lineBoxes)
+  for k, b := range fullBoxes {
+    x0 := b.x0
+    y0 := b.y0
+    if k > 0 {
+      if fullBoxes[k-1].y0 <= b.y0 {
+        x0 = fullBoxes[k-1].x1
+      }
+      y0 = fullBoxes[k-1].y0
+    }
+    x1 := b.x1
+    y1 := b.y0
+    if k < len(fullBoxes)-1 {
+      if fullBoxes[k+1].y0 <= b.y0 {
+        x1 = fullBoxes[k+1].x0
+      }
+      y1 = fullBoxes[k+1].y0
+    }
+    drawH(mm, x0+xx0, x1+xx0, yy1-b.y0)
+    drawV(mm, x0+xx0, yy1-b.y0, yy1-y0)
+    drawV(mm, x1+xx0, yy1-b.y0, yy1-y1)
+    x0 = b.x0
+    y0 = b.y1
+    if k > 0 {
+      if fullBoxes[k-1].y1 >= b.y1 {
+        x0 = fullBoxes[k-1].x1
+      }
+      y0 = fullBoxes[k-1].y1
+    }
+    x1 = b.x1
+    y1 = b.y1
+    if k < len(fullBoxes)-1 {
+      if fullBoxes[k+1].y1 >= b.y1 {
+        x1 = fullBoxes[k+1].x0
+      }
+      y1 = fullBoxes[k+1].y1
+    }
+    drawH(mm, x0+xx0, x1+xx0, yy1-b.y1)
+    drawV(mm, x0+xx0, yy1-b.y1, yy1-y0)
+    drawV(mm, x1+xx0, yy1-b.y1, yy1-y1)
+  }
+}
+
 func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
-    m image.Image) {
+    m image.Image, cutLines bool) {
   xx0 := m.Bounds().Min.X
   yy1 := m.Bounds().Max.Y
   mm := m.(*image.Gray)
-  white := color.Gray{255}
   i := 0
   for j, box := range lineBboxes {
     if box.isEmpty() { continue }
@@ -404,26 +477,8 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
       log.Printf("Lower overlapping line %d y1 %d y0-succ %d\n", j,
         yy1-box.y1, yy1-lineBboxes[jn].y0)
     }
-    fullBoxes := nonEmptyBoxes(lineBoxes[j].boxes)
-    for k, b := range fullBoxes {
-      x0 := b.x0-box.x0
-      if k > 0 {
-        x0 = fullBoxes[k-1].x1 - box.x0 + 1
-      }
-      x1 := b.x1 - box.x0
-      if k < len(fullBoxes) -1 {
-        x1 = fullBoxes[k+1].x0 -box.x0 - 1
-      }
-      y0 := 0
-      y1 := box.y1 - b.y1 - 1
-      draw.Draw(subImg,
-        image.Rect(x0, y0, x1, y1),
-        &image.Uniform{white}, image.Point{0,0}, draw.Src)
-      y0 = box.y1 - b.y0 + 1
-      y1 = box.y1 - box.y0
-      draw.Draw(subImg,
-        image.Rectangle{image.Point{x0, y0}, image.Point{x1, y1}},
-        &image.Uniform{white}, image.ZP, draw.Src)
+    if cutLines {
+      cutImage(subImg, box, lineBoxes[j].boxes)
     }
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {
@@ -442,46 +497,8 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
     drawH(mm, box.x0+xx0, box.x1+xx0, yy1-box.y0)
     drawV(mm, box.x0+xx0, yy1-box.y1, yy1-box.y0)
     drawV(mm, box.x1+xx0, yy1-box.y1, yy1-box.y0)
-    fullBoxes := nonEmptyBoxes(lineBoxes[j].boxes)
-    for k, b := range fullBoxes {
-      x0 := b.x0
-      y0 := b.y0
-      if k > 0 {
-        if fullBoxes[k-1].y0 <= b.y0 {
-          x0 = fullBoxes[k-1].x1
-        }
-        y0 = fullBoxes[k-1].y0
-      }
-      x1 := b.x1
-      y1 := b.y0
-      if k < len(fullBoxes)-1 {
-        if fullBoxes[k+1].y0 <= b.y0 {
-          x1 = fullBoxes[k+1].x0
-        }
-        y1 = fullBoxes[k+1].y0
-      }
-      drawH(mm, x0+xx0, x1+xx0, yy1-b.y0)
-      drawV(mm, x0+xx0, yy1-b.y0, yy1-y0)
-      drawV(mm, x1+xx0, yy1-b.y0, yy1-y1)
-      x0 = b.x0
-      y0 = b.y1
-      if k > 0 {
-        if fullBoxes[k-1].y1 >= b.y1 {
-          x0 = fullBoxes[k-1].x1
-        }
-        y0 = fullBoxes[k-1].y1
-      }
-      x1 = b.x1
-      y1 = b.y1
-      if k < len(fullBoxes)-1 {
-        if fullBoxes[k+1].y1 >= b.y1 {
-          x1 = fullBoxes[k+1].x0
-        }
-        y1 = fullBoxes[k+1].y1
-      }
-      drawH(mm, x0+xx0, x1+xx0, yy1-b.y1)
-      drawV(mm, x0+xx0, yy1-b.y1, yy1-y0)
-      drawV(mm, x1+xx0, yy1-b.y1, yy1-y1)
+    if cutLines {
+      drawCutLines(mm, xx0, yy1, box, lineBoxes[j].boxes)
     }
   }
   previewImgName := workDir+"-preview.png"
@@ -495,7 +512,7 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
   }
 }
 
-func handleFile(base string, img string) {
+func handleFile(base string, img string, cutLines bool) {
   inFile := base+".txt"
   boxFile := base+".box"
   lineBoxFile := base+"-lines.json"
@@ -522,11 +539,11 @@ func handleFile(base string, img string) {
     log.Fatal(err)
   }
   writeJson(lineBoxFile, paraFile, lineBboxes, m)
-  splitImage(base, lineboxes, lineBboxes, m)
+  splitImage(base, lineboxes, lineBboxes, m, cutLines)
   splitText(base, lineBboxes)
 }
 
 func main() {
   params := readParams()
-  handleFile(params.BaseFileName, params.ImgFileName)
+  handleFile(params.BaseFileName, params.ImgFileName, params.CutLines)
 }

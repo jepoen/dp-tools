@@ -391,6 +391,19 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
     )
     draw.Draw(subImg, subImg.Bounds(), mm, image.Point{box.x0+xx0, yy1-box.y1},
       draw.Src)
+    jp := j-1
+    for jp >= 0 && lineBboxes[jp].isEmpty() { jp-- }
+    if jp >= 0 && yy1-lineBboxes[jp].y1 > yy1-box.y0 {
+      log.Printf("Upper overlapping line %d y1-prev %d y0 %d\n", j,
+        yy1-lineBboxes[jp].y1, yy1-box.y0)
+      // TODO clean up
+    }
+    jn := j+1
+    for jn < len(lineBboxes) && lineBboxes[jn].isEmpty() { jn++ }
+    if jn < len(lineBboxes) && yy1-lineBboxes[jn].y0 < yy1-box.y1 {
+      log.Printf("Lower overlapping line %d y1 %d y0-succ %d\n", j,
+        yy1-box.y1, yy1-lineBboxes[jn].y0)
+    }
     fullBoxes := nonEmptyBoxes(lineBoxes[j].boxes)
     for k, b := range fullBoxes {
       x0 := b.x0-box.x0

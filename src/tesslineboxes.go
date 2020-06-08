@@ -407,47 +407,86 @@ func cutImage(img *image.Gray, box Box, lineBoxes []Box) {
   }
 }
 
+func cutImage2(img *image.Gray, xx0, i int, lineBoxes []BoxLine, bboxes []Box) {
+  xx0 = img.Bounds().Min.X
+  log.Printf("cutImage2 %d: %d %d xx0: %d %s\n", i, bboxes[i].y0, bboxes[i].y1, 
+    xx0, boxes2text(lineBoxes[i].boxes))
+  white := color.Gray{255}
+  box := bboxes[i]
+  x0 := xx0-bboxes[i].x0
+  if i > 0 {
+    log.Printf("prev line %d curr line %d offset: %d\n",
+      bboxes[i-1].x0, bboxes[i].x0, x0)
+
+    for _, b := range lineBoxes[i-1].boxes {
+      if b.isEmpty() { continue }
+      if b.y0 < box.y1 {
+        draw.Draw(img,
+          image.Rect(b.x0+x0, 0, b.x1+x0, box.y1-b.y0),
+          &image.Uniform{white}, image.Point{0,0}, draw.Src)
+      }
+    }
+  }
+  if i < len(lineBoxes)-1 {
+    for _, b := range lineBoxes[i+1].boxes {
+      if b.isEmpty() { continue }
+      if b.y1 > box.y0 {
+        draw.Draw(img,
+          image.Rect(b.x0+x0, box.y1-b.y1, b.x1+x0, box.y1-box.y0),
+          &image.Uniform{white}, image.Point{0,0}, draw.Src)
+      }
+    }
+  }
+}
+
 func drawCutLines(mm *image.Gray, xx0, yy1 int, box Box, lineBoxes []Box) {
   fullBoxes := nonEmptyBoxes(lineBoxes)
-  for k, b := range fullBoxes {
+  for _, b := range fullBoxes {
     x0 := b.x0
-    y0 := b.y0
+    //y0 := b.y0
+/*
     if k > 0 {
       if fullBoxes[k-1].y0 <= b.y0 {
         x0 = fullBoxes[k-1].x1
       }
       y0 = fullBoxes[k-1].y0
     }
+*/
     x1 := b.x1
-    y1 := b.y0
+    //y1 := b.y0
+/*
     if k < len(fullBoxes)-1 {
       if fullBoxes[k+1].y0 <= b.y0 {
         x1 = fullBoxes[k+1].x0
       }
       y1 = fullBoxes[k+1].y0
     }
+*/
     drawH(mm, x0+xx0, x1+xx0, yy1-b.y0)
-    drawV(mm, x0+xx0, yy1-b.y0, yy1-y0)
-    drawV(mm, x1+xx0, yy1-b.y0, yy1-y1)
+    //drawV(mm, x0+xx0, yy1-b.y0, yy1-y0)
+    //drawV(mm, x1+xx0, yy1-b.y0, yy1-y1)
     x0 = b.x0
-    y0 = b.y1
+    //y0 = b.y1
+/*
     if k > 0 {
       if fullBoxes[k-1].y1 >= b.y1 {
         x0 = fullBoxes[k-1].x1
       }
       y0 = fullBoxes[k-1].y1
-    }
+*/
     x1 = b.x1
-    y1 = b.y1
+    //y1 = b.y0
+/*
     if k < len(fullBoxes)-1 {
       if fullBoxes[k+1].y1 >= b.y1 {
         x1 = fullBoxes[k+1].x0
       }
       y1 = fullBoxes[k+1].y1
     }
+*/
     drawH(mm, x0+xx0, x1+xx0, yy1-b.y1)
-    drawV(mm, x0+xx0, yy1-b.y1, yy1-y0)
-    drawV(mm, x1+xx0, yy1-b.y1, yy1-y1)
+    //drawV(mm, x0+xx0, yy1-b.y1, yy1-y0)
+    //drawV(mm, x1+xx0, yy1-b.y1, yy1-y1)
   }
 }
 
@@ -478,7 +517,8 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
         yy1-box.y1, yy1-lineBboxes[jn].y0)
     }
     if cutLines {
-      cutImage(subImg, box, lineBoxes[j].boxes)
+      //cutImage(subImg, box, lineBoxes[j].boxes)
+      cutImage2(subImg, xx0, j, lineBoxes, lineBboxes)
     }
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {

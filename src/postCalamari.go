@@ -633,9 +633,11 @@ func handleLine(line string, font int) string {
     re := regexp.MustCompile(entry[0])
     nl = re.ReplaceAllString(nl, entry[1])
   }
-  for _, entry := range(frakPatterns) {
-    re := regexp.MustCompile(entry[0])
-    nl = re.ReplaceAllString(nl, entry[1])
+  if font == FONT_FRAKTUR {
+    for _, entry := range(frakPatterns) {
+      re := regexp.MustCompile(entry[0])
+      nl = re.ReplaceAllString(nl, entry[1])
+    }
   }
   if nl != line {
     LogAddReplacement(line, nl)

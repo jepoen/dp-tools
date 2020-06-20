@@ -1,6 +1,6 @@
 import argparse, os, subprocess
 
-def convert(imgDir, workDir, lang, scale):
+def convert(imgDir, workDir, lang, psm, scale):
   i = 0
   fo = open('pretess.sh', 'w')
   os.makedirs(workDir, exist_ok=True)
@@ -16,7 +16,7 @@ def convert(imgDir, workDir, lang, scale):
     fo.write(' '.join(cmd))
     fo.write('\n')
     subprocess.call(cmd)
-    cmd = ['tesseract', tgt, tgtBase, '--psm', '4', '-l', lang, 'boxtext']
+    cmd = ['tesseract', tgt, tgtBase, '--psm', psm, '-l', lang, 'boxtext']
     print(' '.join(cmd))
     fo.write(' '.join(cmd))
     fo.write('\n')
@@ -39,11 +39,14 @@ def run():
     help='Tesseract Image dir')
   parser.add_argument('--scale', '-s', default=100, type=int,
     help='Scaling factor (%%)')
+  parser.add_argument('--psm', '-p', default='4',
+    help='Tesseract Page Segment Mode')
   parser.add_argument('--lang', '-l', default='deu_frak',
     help='Tesseract language model')
   nargs = parser.parse_args()
   args = vars(nargs)
-  convert(args['imgdir'], args['workdir'], args['lang'], args['scale'])
+  convert(args['imgdir'], args['workdir'], args['lang'], args['psm'],
+    args['scale'])
 
 if __name__ == '__main__':
   run()

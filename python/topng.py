@@ -23,10 +23,15 @@ def main():
     print(f)
     if f[-4:] != '.tif': continue
     i += 1
-    subprocess.call(['convert', "-depth", "2", "-scale", "%d%%" % scale,
-      "%s/%s" % (path, f), "%s/%03d.png" % (tmpDir,i)])
-    subprocess.call(['pngcrush', "-d", tgtDir,
-      "%s/%03d.png" % (tmpDir, i)])
+    cmd = ['convert', "-scale", "%d%%" % scale,
+      "-depth", "2", "-colors", "4", "-type", "Palette",
+      "%s/%s" % (path, f), "%s/%03d.png" % (tmpDir,i)]
+    print(" ".join(cmd))
+    subprocess.call(cmd)
+    cmd =['pngcrush', "-d", tgtDir,
+      "%s/%03d.png" % (tmpDir, i)]
+    print(" ".join(cmd))
+    subprocess.call(cmd)
 #  subprocess.call(['pngnq', "-n", "4", "-f", "-d", "../pngs", "-e", ".png",
 #    "rename/%03d.png" % i])
   shutil.rmtree(tmpDir)

@@ -15,6 +15,11 @@ Eigene Daten:
 * Rieß: Aus grauen Mauern und grünen Weiten. Sächsischer Heimatschutz 1924.
 * Wiedemann: Sprachbilder nach bestimmten Sprachregeln.
   A. Oehmigke's Verlag 1874.
+* Nansen: Auf Schneeschuhen durch Grönland. Band 1. Verlagsanstalt Hamburg 1898.
+* Thomas: Die letzten zwanzig Jahre deutscher Litteraturgeschichte.
+  Walther Fieder 1900.
+* Sächsischer Heimatschutz: Mitteilungen Band X. 1921.
+* Oldenbourg: Buch und Bildung. C. H. Beck. 1925
 
 Weitere mögliche Datenquellen:
 
@@ -41,10 +46,12 @@ Weitere mögliche Datenquellen:
 
 <pre>
 calamari-train --files ocropus-model_fraktur-master/training/*.bin.png \
+                       mydata/training/*.png \
                --output_dir=myModel/ \
-               --validation=ocropus-model_fraktur-master/testing/*.bin.png
+               --validation=ocropus-model_fraktur-master/testing/*.bin.png \
+                            mydata/valid/*.png
 </pre>
-Achtung: Testdaten als Validation-Daten missbraucht!
+Achtung: Ocropus-Testdaten als Validation-Daten missbraucht!
 
 ca. 30'000 Schritte
 

@@ -56,6 +56,19 @@ Aufruf:
 ```shell
 python topng.py tifDir pngDir [scale]
 ```
+## Calamari-venv
+
+* Anaconda installieren
+* Dann:
+
+```shell
+. .../venv/bin/activate
+conda update conda --all
+conda update anaconda
+conda install python=3.6.9
+conda install tensorflow-gpu
+pip install calamari-ocr
+```
 
 ## Calamari-OCR
 

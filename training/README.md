@@ -26,6 +26,12 @@ Weitere mögliche Datenquellen:
 * https://github.com/tmbdev/ocropy/wiki
 * http://www.deutschestextarchiv.de/ (teilweise korrekte Zeilenumbrüche)
 
+## Eigene Trainingsdaten Antiqua
+
+* Pflanzen-Atlas zu Seb. Kneipp's »Waser-Kur«. 1893.
+* Kästner: Vom Reisen und Reisen lassen. 1910.
+* Lindworsky: Experimentelle Psychologie. 1923.
+
 ## Installation für Training mit Calamari
 
 * Installation Anaconda mit `tensorflow_gpu` 2.0.0

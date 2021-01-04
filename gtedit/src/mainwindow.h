@@ -3,6 +3,7 @@
 
 #include <QList>
 #include <QMainWindow>
+#include <QMap>
 
 class QAction;
 class QActionGroup;
@@ -25,6 +26,7 @@ private:
     QLabel *lCurrentChar;
     QLabel *lGtLines;
 
+    QMap<QString, bool> myDict;
     QList<LineEdit*> myLineEdits;
     QString myDir;
     double myScale;
@@ -34,6 +36,7 @@ private:
     void createMainWidget();
     void createStatusBar();
     void showPage(const QString& dirName);
+    void readDict();
 
 public:
     MainWindow(QWidget *parent = nullptr);

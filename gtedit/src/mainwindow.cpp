@@ -6,6 +6,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    readDict();
     myDir = QDir(".").absolutePath();
     myScale = 1.0;
     createActions();
@@ -75,12 +76,12 @@ void MainWindow::showPage(const QString& dirName) {
     }
     widget = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout();
-    QFont font("DPCustomMono2", 14);
+    QFont font("DPSansMono", 14);
     QDir dir = QDir(dirName);
     QStringList fileNames = dir.entryList(QStringList()<<"l-???.png", QDir::Files, QDir::Name);
 
     for (QString f: fileNames) {
-        LineEdit *le = new LineEdit(dir, f);
+        LineEdit *le = new LineEdit(dir, f, &myDict);
         le->setFont(font);
         le->setScale(myScale);
         layout->addWidget(le);
@@ -140,4 +141,19 @@ void MainWindow::setScale() {
     for(LineEdit *ed: myLineEdits) {
         ed->setScale(myScale);
     }
+}
+
+void MainWindow::readDict() {
+    QFile fi(":/resources/dict-de.dat");
+    if (fi.open(QFile::ReadOnly)) {
+        QTextStream in(&fi);
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            QStringList parts = line.split(" ");
+            for (const QString& part: parts) {
+                myDict.insert(part, true);
+            }
+        }
+    }
+    qDebug()<<"dictionary: "<<myDict.size();
 }

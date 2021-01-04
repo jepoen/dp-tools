@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/dict-de.dat</file>
+    </qresource>
+</RCC>

@@ -3,9 +3,9 @@
 #include <QtDebug>
 #include "lineedit.h"
 
-LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
+LineEdit::LineEdit(const QDir &dir, const QString &fileName, QMap<QString, bool> *dict, QWidget *parent):
     QWidget(parent),
-    myDir(dir), myFileName(fileName), myHasGt(false)
+    myDir(dir), myFileName(fileName), myDict(dict), myHasGt(false)
 {
     QVBoxLayout *layout = new QVBoxLayout();
     setLayout(layout);
@@ -60,6 +60,8 @@ LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
 
     lImg->setPixmap(pixmap);
     layout->addWidget(lImg);
+    myLineText = new QLabel();
+    layout->addWidget(myLineText);
     myLineEdit = new QLineEdit();
     file.open(QFile::ReadOnly|QFile::Text);
     QString text = QString(file.readAll());
@@ -70,6 +72,8 @@ LineEdit::LineEdit(const QDir& dir, const QString& fileName, QWidget *parent):
     myLineEdit->setCursorPosition(0);
     layout->addWidget(myLineEdit);
     qDebug()<<"widget created";
+    checkSpelling(myLineEdit->text());
+    connect(myLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(checkSpelling(const QString&)));
 }
 
 void LineEdit::setScale(double scale) {
@@ -82,6 +86,7 @@ void LineEdit::setScale(double scale) {
 
 void LineEdit::setFont(const QFont font) {
     myLineEdit->setFont(font);
+    myLineText->setFont(font);
 }
 
 void LineEdit::save() {
@@ -96,7 +101,7 @@ void LineEdit::save() {
     QString StyleGt = "QLabel {background-color: green;}";
     lFile->setStyleSheet(StyleGt);
     myHasGt = true;
-    emit gtChanged();
+    gtChanged();
 }
 
 void LineEdit::del() {
@@ -117,4 +122,57 @@ QString LineEdit::handlePred(QString &text) {
     text = text.replace("'''", "‘“");
     text = text.replace("''", "“");
     return text;
+}
+
+void LineEdit::checkSpelling(const QString& text) {
+    QList<LinePart> parts;
+    QString part;
+    int partType = LinePart::OTHER;
+    for (const QChar& c: text) {
+        if (c.isLetter()) {
+            if (partType != LinePart::TEXT) {
+                if (part.size() > 0) {
+                    parts.append(LinePart(part, partType));
+                }
+                partType = LinePart::TEXT;
+                part = "";
+            }
+        } else if (c.isDigit()) {
+            if (partType != LinePart::NUMBER) {
+                if (part.size() > 0) {
+                    parts.append(LinePart(part, partType));
+                }
+                partType = LinePart::NUMBER;
+                part = "";
+            }
+        } else {
+            if (partType != LinePart::OTHER) {
+                if (part.size() > 0) {
+                    parts.append(LinePart(part, partType));
+                }
+                partType = LinePart::OTHER;
+                part = "";
+            }
+        }
+        part += c;
+    }
+    if (part.size() > 0) {
+        parts.append(LinePart(part, partType));
+    }
+    QString myText;
+    for (const LinePart& part: parts) {
+        if (part.type() == LinePart::TEXT) {
+            if (myDict->contains(part.text())) {
+                myText += part.text();
+            } else {
+                qDebug()<<"not found: "<<QString("[%1]").arg(part.text());
+                myText += "<b style=\"color:red;\">"+part.text()+"</b>";
+            }
+        } else if (part.type() == LinePart::NUMBER) {
+            myText += "<i>"+part.text()+"<i>";
+        } else {
+            myText += "<span style=\"background-color:yellow;\">"+part.text()+"</span>";
+        }
+    }
+    myLineText->setText(myText);
 }

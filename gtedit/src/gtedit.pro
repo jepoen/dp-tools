@@ -18,11 +18,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     lineedit.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    pattern.cpp
 
 HEADERS += \
     lineedit.h \
-    mainwindow.h
+    mainwindow.h \
+    pattern.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -33,4 +35,5 @@ RESOURCES += \
     gtedit.qrc
 
 DISTFILES += \
-    resources/dict-de.dat
+    resources/dict-de.dat \
+    resources/gaps.dat

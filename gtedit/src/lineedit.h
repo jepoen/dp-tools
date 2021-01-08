@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QString>
 #include <QWidget>
+#include "pattern.h"
 
 class QLabel;
 class QLayout;
@@ -21,10 +22,10 @@ private:
     QLineEdit *myLineEdit;
     QDir myDir;
     QString myFileName;
-    QMap<QString, bool> *myDict;
+    Pattern *myDict;
     bool myHasGt;
 public:
-    LineEdit(const QDir &dir, const QString& fileName, QMap<QString, bool> *dict, QWidget *parent = Q_NULLPTR);
+    LineEdit(const QDir &dir, const QString& fileName, Pattern *dict, QWidget *parent = Q_NULLPTR);
     void setScale(double scale);
     void setFont(const QFont font);
     QLineEdit *editor() const { return myLineEdit; }

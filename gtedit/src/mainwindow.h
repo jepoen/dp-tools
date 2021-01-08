@@ -3,7 +3,7 @@
 
 #include <QList>
 #include <QMainWindow>
-#include <QMap>
+#include "pattern.h"
 
 class QAction;
 class QActionGroup;
@@ -26,7 +26,7 @@ private:
     QLabel *lCurrentChar;
     QLabel *lGtLines;
 
-    QMap<QString, bool> myDict;
+    Pattern *myDict;
     QList<LineEdit*> myLineEdits;
     QString myDir;
     double myScale;

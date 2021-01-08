@@ -3,7 +3,7 @@
 #include <QtDebug>
 #include "lineedit.h"
 
-LineEdit::LineEdit(const QDir &dir, const QString &fileName, QMap<QString, bool> *dict, QWidget *parent):
+LineEdit::LineEdit(const QDir &dir, const QString &fileName, Pattern *dict, QWidget *parent):
     QWidget(parent),
     myDir(dir), myFileName(fileName), myDict(dict), myHasGt(false)
 {
@@ -162,16 +162,21 @@ void LineEdit::checkSpelling(const QString& text) {
     QString myText;
     for (const LinePart& part: parts) {
         if (part.type() == LinePart::TEXT) {
-            if (myDict->contains(part.text())) {
+            if (myDict->containsWord(part.text())) {
                 myText += part.text();
             } else {
                 qDebug()<<"not found: "<<QString("[%1]").arg(part.text());
                 myText += "<b style=\"color:red;\">"+part.text()+"</b>";
             }
         } else if (part.type() == LinePart::NUMBER) {
-            myText += "<i>"+part.text()+"<i>";
+            myText += "<i>"+part.text()+"</i>";
         } else {
-            myText += "<span style=\"background-color:yellow;\">"+part.text()+"</span>";
+            if (myDict->containsGap(part.text())) {
+                myText += part.text();
+            } else {
+                qDebug()<<"Gap not found: "<<QString("[%1]").arg(part.text());
+                myText += "<span style=\"background-color:yellow;\">"+part.text()+"</span>";
+            }
         }
     }
     myLineText->setText(myText);

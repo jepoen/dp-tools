@@ -20,6 +20,7 @@ Eigene Daten:
   Walther Fieder 1900.
 * Sächsischer Heimatschutz: Mitteilungen Band X. 1921.
 * Oldenbourg: Buch und Bildung. C. H. Beck. 1925
+* Clemen: Die nichtchristlichen Kulturreligionen, Teil 1 und 2. Teubner 1921.
 
 Weitere mögliche Datenquellen:
 

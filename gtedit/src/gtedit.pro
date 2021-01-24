@@ -19,11 +19,13 @@ SOURCES += \
     lineedit.cpp \
     main.cpp \
     mainwindow.cpp \
+    mylineedit.cpp \
     pattern.cpp
 
 HEADERS += \
     lineedit.h \
     mainwindow.h \
+    mylineedit.h \
     pattern.h
 
 # Default rules for deployment.
@@ -36,4 +38,5 @@ RESOURCES += \
 
 DISTFILES += \
     resources/dict-de.dat \
+    resources/endgaps.dat \
     resources/gaps.dat

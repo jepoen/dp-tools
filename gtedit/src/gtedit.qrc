@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>resources/dict-de.dat</file>
         <file>resources/gaps.dat</file>
+        <file>resources/endgaps.dat</file>
     </qresource>
 </RCC>

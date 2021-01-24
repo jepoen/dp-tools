@@ -44,7 +44,7 @@ public:
 private slots:
     void openPage();
     void handleLine(QAction *);
-    void getCurrentChar(int /*old*/, int pos);
+    void getCurrentChar();
     void countGtLines();
     void setScale();
 };

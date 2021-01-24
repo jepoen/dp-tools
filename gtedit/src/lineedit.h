@@ -10,7 +10,8 @@
 
 class QLabel;
 class QLayout;
-class QLineEdit;
+class MyLineEdit;
+class MyHighlighter;
 
 class LineEdit: public QWidget {
     Q_OBJECT
@@ -18,8 +19,8 @@ private:
     QLayout *myLayout;
     QLabel *lFile;
     QLabel *lImg;
-    QLabel *myLineText;
-    QLineEdit *myLineEdit;
+    MyLineEdit *myLineEdit;
+    MyHighlighter *myHighlighter;
     QDir myDir;
     QString myFileName;
     Pattern *myDict;
@@ -28,7 +29,7 @@ public:
     LineEdit(const QDir &dir, const QString& fileName, Pattern *dict, QWidget *parent = Q_NULLPTR);
     void setScale(double scale);
     void setFont(const QFont font);
-    QLineEdit *editor() const { return myLineEdit; }
+    MyLineEdit *editor() const { return myLineEdit; }
     QString handlePred(QString &text);
     void setHasGt(bool val) { myHasGt = val; }
     bool hasGt() const { return myHasGt; }
@@ -37,7 +38,6 @@ signals:
 private slots:
     void save();
     void del();
-    void checkSpelling(const QString& text);
 };
 
 class LinePart {

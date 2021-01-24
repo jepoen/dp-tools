@@ -2,6 +2,7 @@
 #include <QtWidgets>
 #include "mainwindow.h"
 #include "lineedit.h"
+#include "mylineedit.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -86,14 +87,14 @@ void MainWindow::showPage(const QString& dirName) {
         le->setScale(myScale);
         layout->addWidget(le);
         myLineEdits.append(le);
-        connect(le->editor(), SIGNAL(cursorPositionChanged(int, int)), this, SLOT(getCurrentChar(int, int)));
+        connect(le->editor(), SIGNAL(cursorPositionChanged()), this, SLOT(getCurrentChar()));
         connect(le, &LineEdit::gtChanged, this, &MainWindow::countGtLines);
     }
     if (myLineEdits.size() > 0) {
         qDebug()<<"Set focus";
-        QTimer::singleShot(0, myLineEdits.at(0)->editor(), SLOT(setFocus()));
-        myLineEdits.at(0)->editor()->home(false);
-        QTimer::singleShot(0, this, SLOT(getCurrentChar(0, 0)));
+        QTimer::singleShot(0, myLineEdits.at(0), SLOT(setFocus()));
+        myLineEdits.at(0)->editor()->moveCursor(QTextCursor::Start);
+        QTimer::singleShot(0, this, SLOT(getCurrentChar()));
     }
     widget->setLayout(layout);
     mainWidget->setWidget(widget);
@@ -112,16 +113,17 @@ void MainWindow::handleLine(QAction *action) {
     qDebug()<<"handleLine"<<action->data();
 }
 
-void MainWindow::getCurrentChar(int /*oldPos*/, int newPos) {
+void MainWindow::getCurrentChar() {
     QWidget *currWidget =  focusWidget();
-    QLineEdit *ed = qobject_cast<QLineEdit*>(currWidget);
-    qDebug()<<"Cursor changed";
+    MyLineEdit *ed = qobject_cast<MyLineEdit*>(currWidget);
     if (ed == nullptr) return;
-    if (newPos >= ed->text().size()) {
-        qDebug()<<"pos"<<newPos<<" size "<<ed->text().size();
+    int newPos = ed->textCursor().position();
+    qDebug()<<"Cursor changed";
+    if (newPos >= ed->toPlainText().size()) {
+        qDebug()<<"pos"<<newPos<<" size "<<ed->toPlainText().size();
         return;
     }
-    QChar c = ed->text().at(newPos);
+    QChar c = ed->toPlainText().at(newPos);
     qDebug()<<c;
     lCurrentChar->setText(QString("%1 %2").arg(c).arg(c.unicode(), 4, 16));
 }
@@ -166,7 +168,17 @@ void MainWindow::readDict() {
             gaps.insert(gap);
         }
     }
-    myDict = new Pattern(words, gaps);
+    QSet<QString> endGaps;
+    QFile fiEndgaps(":/resources/endgaps.dat");
+    if (fiEndgaps.open(QFile::ReadOnly)) {
+        QTextStream in(&fiEndgaps);
+        while (!in.atEnd()) {
+            QString line = in.readLine().trimmed();
+            QString gap = line.mid(1, line.size()-2);
+            endGaps.insert(gap);
+        }
+    }
+    myDict = new Pattern(words, gaps, endGaps);
     qDebug()<<"dictionary: "<<myDict->wordSize()<<" "<<myDict->gapSize();
     myDict->showGaps();
 }

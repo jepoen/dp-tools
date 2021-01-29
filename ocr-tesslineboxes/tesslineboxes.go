@@ -146,8 +146,10 @@ func (box *Box) isEmpty() bool {
 }
 
 func (boxLine *BoxLine) isEmpty() bool {
-  return (len(boxLine.boxes) == 0 ||
-    (len(boxLine.boxes) == 1 && boxLine.boxes[0].isEmpty()))
+  for _, box := range(boxLine.boxes) {
+    if !box.isEmpty() { return false }
+  }
+  return true
 }
 
 func nonEmptyBoxes(boxes []Box) []Box {
@@ -164,6 +166,7 @@ func removeEmptyBoxLines(boxLines []BoxLine) []BoxLine {
   res := []BoxLine{}
   for _, line := range(boxLines) {
     if line.isEmpty() { continue }
+    log.Println("removeEmpty preserve", line)
     res = append(res, line)
   }
   return res;
@@ -647,6 +650,7 @@ func splitImageBboxes(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
 func splitImageCutline(workDir string, lineBoxes []BoxLine,
     m image.Image) {
   nonEmptyLines := removeEmptyBoxLines(lineBoxes)
+  log.Println("cut nonempty boxes", nonEmptyLines)
   cutLines := getCutLines(nonEmptyLines)
   xx0 := m.Bounds().Min.X
   yy1 := m.Bounds().Max.Y

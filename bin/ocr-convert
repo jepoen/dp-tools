@@ -22,8 +22,8 @@ def convert(imgDir, workDir, lang, psm, scale):
     fo.write(' '.join(cmd))
     fo.write('\n')
     subprocess.call(cmd)
-    cmd = ['tesslineboxes', '-basename', tgtBase,
-      '-image', tgt]
+    cmd = ['ocr-tesslineboxes', '-basename', tgtBase,
+      '-image', tgt, '-c']
     print(' '.join(cmd))
     fo.write(' '.join(cmd))
     fo.write('\n')

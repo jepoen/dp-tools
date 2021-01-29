@@ -48,6 +48,13 @@ type Quartiles struct {
   max int
 }
 
+type Point struct {
+  x int
+  y int
+}
+
+type Points []Point
+
 type Box struct {
   glyph string
   x0 int
@@ -56,8 +63,10 @@ type Box struct {
   y1 int
 }
 
+type Boxes []Box
+
 type BoxLine struct {
-  boxes []Box
+  boxes Boxes
 }
 
 type JsBoxes struct {
@@ -136,12 +145,26 @@ func (box *Box) isEmpty() bool {
   return box.y1-box.y0 == 0
 }
 
+func (boxLine *BoxLine) isEmpty() bool {
+  return (len(boxLine.boxes) == 0 ||
+    (len(boxLine.boxes) == 1 && boxLine.boxes[0].isEmpty()))
+}
+
 func nonEmptyBoxes(boxes []Box) []Box {
   res := []Box{}
   for _, b := range boxes {
     if !b.isEmpty() {
       res = append(res, b)
     }
+  }
+  return res;
+}
+
+func removeEmptyBoxLines(boxLines []BoxLine) []BoxLine {
+  res := []BoxLine{}
+  for _, line := range(boxLines) {
+    if line.isEmpty() { continue }
+    res = append(res, line)
   }
   return res;
 }
@@ -155,7 +178,7 @@ func intQuartiles (vals []int) Quartiles {
   return Quartiles{vals[0], vals[l/4], vals[l/2], vals[3*l/4], vals[l]}
 }
 
-func boundingBox(boxes []Box) Box {
+func (boxes Boxes) boundingBox() Box {
   if len(boxes) == 0 {
     return Box{"", 0, 0, 0, 0}
   }
@@ -167,6 +190,20 @@ func boundingBox(boxes []Box) Box {
     if b.y0 < res.y0 { res.y0 = b.y0 }
     if b.x1 > res.x1 { res.x1 = b.x1 }
     if b.y1 > res.y1 { res.y1 = b.y1 }
+  }
+  return res
+}
+
+func (points Points) boundingBox() Box {
+  if len(points) == 0 {
+    return Box{"", 0, 0, 0, 0}
+  }
+  res := Box{"", points[0].x, points[0].y, points[0].x, points[0].y}
+  for _, p := range points[1:] {
+    if p.x < res.x0 { res.x0 = p.x }
+    if p.y < res.y0 { res.y0 = p.y }
+    if p.x > res.x1 { res.x1 = p.x }
+    if p.y > res.y1 { res.y1 = p.y }
   }
   return res
 }
@@ -304,7 +341,7 @@ func processBoxes(lines []string, boxes []Box) []BoxLine {
 func boundingBoxes(boxLines []BoxLine) []Box {
   res := []Box{}
   for _, boxLine := range(boxLines) {
-    bbox := boundingBox(boxLine.boxes)
+    bbox := boxLine.boxes.boundingBox()
     res = append(res, bbox)
   }
   return res
@@ -377,6 +414,7 @@ func drawH(mm *image.Gray, x0, x1, y int) {
 }
 
 func drawV(mm *image.Gray, x, y0, y1 int) {
+  if y0 > y1 { y0, y1 = y1, y0 }
   for y := y0; y <= y1; y++ {
     mm.SetGray(x, y, color.Gray{0})
   }
@@ -439,59 +477,120 @@ func cutImage2(img *image.Gray, xx0, i int, lineBoxes []BoxLine, bboxes []Box) {
   }
 }
 
-func drawCutLines(mm *image.Gray, xx0, yy1 int, box Box, lineBoxes []Box) {
-  fullBoxes := nonEmptyBoxes(lineBoxes)
-  for _, b := range fullBoxes {
-    x0 := b.x0
-    //y0 := b.y0
-/*
-    if k > 0 {
-      if fullBoxes[k-1].y0 <= b.y0 {
-        x0 = fullBoxes[k-1].x1
+func drawCutLines(mm *image.Gray, xx0, yy1 int, cutLines []Points) {
+  for _, line := range(cutLines) {
+    pPrev := line[0]
+    for _, p := range(line[1:]) {
+      if pPrev.x == p.x {
+        drawV(mm, p.x + xx0, yy1 - pPrev.y, yy1 - p.y)
+      } else {
+        drawH(mm, pPrev.x + xx0, p.x + xx0, yy1 - p.y)
       }
-      y0 = fullBoxes[k-1].y0
+      pPrev = p
     }
-*/
-    x1 := b.x1
-    //y1 := b.y0
-/*
-    if k < len(fullBoxes)-1 {
-      if fullBoxes[k+1].y0 <= b.y0 {
-        x1 = fullBoxes[k+1].x0
-      }
-      y1 = fullBoxes[k+1].y0
-    }
-*/
-    drawH(mm, x0+xx0, x1+xx0, yy1-b.y0)
-    //drawV(mm, x0+xx0, yy1-b.y0, yy1-y0)
-    //drawV(mm, x1+xx0, yy1-b.y0, yy1-y1)
-    x0 = b.x0
-    //y0 = b.y1
-/*
-    if k > 0 {
-      if fullBoxes[k-1].y1 >= b.y1 {
-        x0 = fullBoxes[k-1].x1
-      }
-      y0 = fullBoxes[k-1].y1
-*/
-    x1 = b.x1
-    //y1 = b.y0
-/*
-    if k < len(fullBoxes)-1 {
-      if fullBoxes[k+1].y1 >= b.y1 {
-        x1 = fullBoxes[k+1].x0
-      }
-      y1 = fullBoxes[k+1].y1
-    }
-*/
-    drawH(mm, x0+xx0, x1+xx0, yy1-b.y1)
-    //drawV(mm, x0+xx0, yy1-b.y1, yy1-y0)
-    //drawV(mm, x1+xx0, yy1-b.y1, yy1-y1)
   }
 }
 
-func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
-    m image.Image, cutLines bool) {
+func findMeanLine(bottom Points, top Points) Points {
+  midLine := Points{}
+  iTop := 0
+  iBottom := 0
+  //log.Println(bottom)
+  //log.Println(top)
+  // find start point
+  for iBottom < len(bottom)-2 && bottom[iBottom+2].x < top[0].x {
+    iBottom += 2;
+  }
+  for iTop < len(top)-2 && top[iTop+2].x < bottom[0].x {
+    iTop += 2;
+  }
+  yBottom := bottom[iBottom].y
+  yTop := top[iTop].y
+  yMean := (yTop + yBottom) / 2
+  isStart := true
+  for iTop < len(top) && iBottom < len(bottom) {
+    x := top[iTop].x
+    if top[iTop].x < bottom[iBottom].x {
+      yTop = top[iTop].y
+      iTop += 2
+    } else {
+      x = bottom[iBottom].x
+      yBottom = bottom[iBottom].y
+      iBottom += 2
+    }
+    //log.Printf("midline x %d itop %d ibottom %d yold %d",
+    //  x, iTop, iBottom, yMean)
+    // old y
+    if isStart {
+      isStart = false
+    } else {
+      midLine = append(midLine, Point{x, yMean})
+    }
+    yMean = (yTop + yBottom) / 2
+    //log.Printf(" ynew %d\n", yMean)
+    // new y
+    midLine = append(midLine, Point{x, yMean})
+  }
+  iTop = len(top) - 1
+  iBottom = len(bottom) - 1
+  x := top[iTop].x
+  if bottom[iBottom].x > x {
+    x = bottom[iBottom].x
+  }
+  midLine = append(midLine, Point{x, yMean})
+
+  //log.Println("cutline", midLine)
+  return midLine
+}
+
+func getCutLines(lineBoxes []BoxLine) []Points {
+  res := []Points{}
+  prevBottom := Points{}
+  for iLine, boxLine := range(lineBoxes) {
+    lineTop := Points{}
+    lineBottom := Points{}
+    //log.Println("getCutLines", iLine, boxLine.boxes)
+    prevBox := Box{}
+    start := true
+    for _, box := range(boxLine.boxes) {
+      if box.isEmpty() { continue }
+      if  start {
+        lineTop = append(lineTop, Point{box.x0, box.y1})
+        lineBottom = append(lineBottom, Point{box.x0, box.y0})
+        start = false
+      } else {
+        x := box.x0 // extend prev box to next glyph
+        // if current glyph is smaller than prev, extend its box to prev.
+        if prevBox.y1 > box.y1 { x = prevBox.x1 }
+        lineTop = append(lineTop, Point{x, prevBox.y1})
+        lineTop = append(lineTop, Point{x, box.y1})
+        x = box.x0 // same for bottom line
+        if prevBox.y0 < box.y0 { x = prevBox.x1 }
+        lineBottom = append(lineBottom, Point{x, prevBox.y0})
+        lineBottom = append(lineBottom, Point{x, box.y0})
+      }
+      prevBox = box
+    }
+    lineTop = append(lineTop, Point{prevBox.x1, prevBox.y1})
+    lineBottom = append(lineBottom, Point{prevBox.x1, prevBox.y0})
+    if iLine > 0 {
+      // find middle line
+      midLine := findMeanLine(prevBottom, lineTop)
+      res = append(res, midLine)
+      // debug
+      //res = append(res, lineTop)
+      //res = append(res, prevBottom)
+      //log.Println("top", len(lineTop), "bottom", len(prevBottom),
+      //  "mid", len(midLine))
+      //log.Println("midLine", midLine, boxes2text(boxLine.boxes))
+    }
+    prevBottom = lineBottom
+  }
+  return res
+}
+
+func splitImageBboxes(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
+    m image.Image) {
   xx0 := m.Bounds().Min.X
   yy1 := m.Bounds().Max.Y
   mm := m.(*image.Gray)
@@ -516,10 +615,6 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
       log.Printf("Lower overlapping line %d y1 %d y0-succ %d\n", j,
         yy1-box.y1, yy1-lineBboxes[jn].y0)
     }
-    if cutLines {
-      //cutImage(subImg, box, lineBoxes[j].boxes)
-      cutImage2(subImg, xx0, j, lineBoxes, lineBboxes)
-    }
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)
@@ -531,15 +626,12 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
     }
     i++
   }
-  for j, box := range lineBboxes {
+  for _, box := range lineBboxes {
     if box.isEmpty() { continue }
     drawH(mm, box.x0+xx0, box.x1+xx0, yy1-box.y1)
     drawH(mm, box.x0+xx0, box.x1+xx0, yy1-box.y0)
     drawV(mm, box.x0+xx0, yy1-box.y1, yy1-box.y0)
     drawV(mm, box.x1+xx0, yy1-box.y1, yy1-box.y0)
-    if cutLines {
-      drawCutLines(mm, xx0, yy1, box, lineBoxes[j].boxes)
-    }
   }
   previewImgName := workDir+"-preview.png"
   if fo, err := os.Create(previewImgName); err != nil {
@@ -552,7 +644,90 @@ func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
   }
 }
 
-func handleFile(base string, img string, cutLines bool) {
+func splitImageCutline(workDir string, lineBoxes []BoxLine,
+    m image.Image) {
+  nonEmptyLines := removeEmptyBoxLines(lineBoxes)
+  cutLines := getCutLines(nonEmptyLines)
+  xx0 := m.Bounds().Min.X
+  yy1 := m.Bounds().Max.Y
+  mm := m.(*image.Gray)
+  white := color.Gray{255}
+  // debug
+  //drawCutLines(mm, xx0, yy1, cutLines)
+  for i, line := range nonEmptyLines {
+    lineBbox := line.boxes.boundingBox()
+    y1 := lineBbox.y1 // upper border
+    y0 := lineBbox.y0 // lower border
+    if i > 0 {
+      bbcl := cutLines[i-1].boundingBox()
+      y1 = bbcl.y1
+    }
+    if i < len(cutLines) {
+      bbcl := cutLines[i].boundingBox()
+      y0 = bbcl.y0
+    }
+    //log.Printf("Line %d, size %d %d %d %d (%s)\n", i, lineBbox.x0, y0,
+    //  lineBbox.x1, y1, boxes2text(line.boxes))
+    subImg := image.NewGray(image.Rect(
+      0, 0, lineBbox.x1-lineBbox.x0, y1-y0),
+    )
+    draw.Draw(subImg, subImg.Bounds(), mm, image.Point{lineBbox.x0+xx0, yy1-y1},
+      draw.Src)
+    bx0 := lineBbox.x0+xx0
+    by0 := y0
+    by1 := y1
+    if i > 0 {
+      for k := 0; k < len(cutLines[i-1]); k += 2 {
+        p0 := cutLines[i-1][k]
+        p1 := cutLines[i-1][k+1]
+        //log.Println("gray", p0, p1, bx0, by1)
+        draw.Draw(subImg,
+          image.Rect(p0.x-bx0, by1-p0.y, p1.x-bx0, 0),
+          &image.Uniform{white}, image.Point{0,0}, draw.Src)
+      }
+    }
+    if i < len(cutLines) {
+      for k := 0; k < len(cutLines[i]); k += 2 {
+        p0 := cutLines[i][k]
+        p1 := cutLines[i][k+1]
+        //log.Println("gray", p0, p1, bx0, by1)
+        draw.Draw(subImg,
+          image.Rect(p0.x-bx0, by1-p0.y, p1.x-bx0, by1-by0),
+          &image.Uniform{white}, image.Point{0,0}, draw.Src)
+      }
+    }
+    subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
+    if fo, err := os.Create(subFileName); err != nil {
+      log.Println(err, subFileName)
+    } else {
+      defer fo.Close()
+      if err := png.Encode(fo, subImg); err != nil {
+        log.Println(err)
+      }
+    }
+  }
+  drawCutLines(mm, xx0, yy1, cutLines)
+  previewImgName := workDir+"-preview.png"
+  if fo, err := os.Create(previewImgName); err != nil {
+    log.Println(err, previewImgName)
+  } else {
+    defer fo.Close()
+    if err := png.Encode(fo, mm); err != nil {
+      log.Println(err)
+    }
+  }
+}
+
+func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
+    m image.Image, isCutLines bool) {
+  if isCutLines {
+    splitImageCutline(workDir, lineBoxes, m)
+  } else {
+    splitImageBboxes(workDir, lineBoxes, lineBboxes, m)
+  }
+}
+
+func handleFile(base string, img string, isCutLines bool) {
   inFile := base+".txt"
   boxFile := base+".box"
   lineBoxFile := base+"-lines.json"
@@ -579,7 +754,7 @@ func handleFile(base string, img string, cutLines bool) {
     log.Fatal(err)
   }
   writeJson(lineBoxFile, paraFile, lineBboxes, m)
-  splitImage(base, lineboxes, lineBboxes, m, cutLines)
+  splitImage(base, lineboxes, lineBboxes, m, isCutLines)
   splitText(base, lineBboxes)
 }
 

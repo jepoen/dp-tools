@@ -621,7 +621,7 @@ func imgWhiteLine(img *image.Gray, y int) bool {
   bounds := img.Bounds()
   for x := bounds.Min.X; x < bounds.Max.X; x++ {
     if img.At(x, y) != white {
-      log.Println("not white", y, x, img.At(x, y))
+      //log.Println("not white", y, x, img.At(x, y))
       return false
     }
   }
@@ -631,7 +631,7 @@ func imgWhiteLine(img *image.Gray, y int) bool {
 func cropImg(img *image.Gray) image.Image {
   // TODO: remove white border
   bounds := img.Bounds()
-  log.Println("cropImg bounds", bounds)
+  //log.Println("cropImg bounds", bounds)
   yMin := bounds.Min.Y
   for yMin < bounds.Max.Y && imgWhiteLine(img, yMin) {
     yMin++
@@ -644,7 +644,7 @@ func cropImg(img *image.Gray) image.Image {
     bounds.Min.Y = yMin
     bounds.Max.Y = yMax
   }
-  log.Println("cropped", bounds.Min.Y, bounds.Max.Y)
+  //log.Println("cropped", bounds.Min.Y, bounds.Max.Y)
   crop := img.SubImage(bounds)
   return crop
 }

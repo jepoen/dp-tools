@@ -29,6 +29,7 @@ Weitere mögliche Datenquellen:
 
 ## Eigene Trainingsdaten Antiqua
 
+* Volz: Der Graf von Saint-Germain. 1923.
 * Pflanzen-Atlas zu Seb. Kneipp's »Waser-Kur«. 1893.
 * Kästner: Vom Reisen und Reisen lassen. 1910.
 * Lindworsky: Experimentelle Psychologie. 1923.

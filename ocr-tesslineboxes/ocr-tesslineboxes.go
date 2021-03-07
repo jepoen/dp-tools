@@ -448,38 +448,6 @@ func cutImage(img *image.Gray, box Box, lineBoxes []Box) {
   }
 }
 
-func cutImage2(img *image.Gray, xx0, i int, lineBoxes []BoxLine, bboxes []Box) {
-  xx0 = img.Bounds().Min.X
-  log.Printf("cutImage2 %d: %d %d xx0: %d %s\n", i, bboxes[i].y0, bboxes[i].y1, 
-    xx0, boxes2text(lineBoxes[i].boxes))
-  white := color.Gray{255}
-  box := bboxes[i]
-  x0 := xx0-bboxes[i].x0
-  if i > 0 {
-    log.Printf("prev line %d curr line %d offset: %d\n",
-      bboxes[i-1].x0, bboxes[i].x0, x0)
-
-    for _, b := range lineBoxes[i-1].boxes {
-      if b.isEmpty() { continue }
-      if b.y0 < box.y1 {
-        draw.Draw(img,
-          image.Rect(b.x0+x0, 0, b.x1+x0, box.y1-b.y0),
-          &image.Uniform{white}, image.Point{0,0}, draw.Src)
-      }
-    }
-  }
-  if i < len(lineBoxes)-1 {
-    for _, b := range lineBoxes[i+1].boxes {
-      if b.isEmpty() { continue }
-      if b.y1 > box.y0 {
-        draw.Draw(img,
-          image.Rect(b.x0+x0, box.y1-b.y1, b.x1+x0, box.y1-box.y0),
-          &image.Uniform{white}, image.Point{0,0}, draw.Src)
-      }
-    }
-  }
-}
-
 func drawCutLines(mm *image.Gray, xx0, yy1 int, cutLines []Points) {
   for _, line := range(cutLines) {
     pPrev := line[0]
@@ -537,7 +505,7 @@ func findMeanLine(bottom Points, top Points) Points {
   iTop = len(top) - 1
   iBottom = len(bottom) - 1
   x := top[iTop].x
-  if bottom[iBottom].x > x {
+  if bottom[iBottom].x < x {
     x = bottom[iBottom].x
   }
   midLine = append(midLine, Point{x, yMean})
@@ -618,12 +586,13 @@ func splitImageBboxes(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
       log.Printf("Lower overlapping line %d y1 %d y0-succ %d\n", j,
         yy1-box.y1, yy1-lineBboxes[jn].y0)
     }
+    cutImg := cropImg(subImg)
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)
     } else {
       defer fo.Close()
-      if err := png.Encode(fo, subImg); err != nil {
+      if err := png.Encode(fo, cutImg); err != nil {
         log.Println(err)
       }
     }
@@ -645,6 +614,39 @@ func splitImageBboxes(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
       log.Println(err)
     }
   }
+}
+
+func imgWhiteLine(img *image.Gray, y int) bool {
+  white := color.Gray{255}
+  bounds := img.Bounds()
+  for x := bounds.Min.X; x < bounds.Max.X; x++ {
+    if img.At(x, y) != white {
+      log.Println("not white", y, x, img.At(x, y))
+      return false
+    }
+  }
+  return true
+}
+
+func cropImg(img *image.Gray) image.Image {
+  // TODO: remove white border
+  bounds := img.Bounds()
+  log.Println("cropImg bounds", bounds)
+  yMin := bounds.Min.Y
+  for yMin < bounds.Max.Y && imgWhiteLine(img, yMin) {
+    yMin++
+  }
+  yMax := bounds.Max.Y
+  for yMax > bounds.Min.Y && imgWhiteLine(img, yMax-1) {
+    yMax--
+  }
+  if yMax > yMin {
+    bounds.Min.Y = yMin
+    bounds.Max.Y = yMax
+  }
+  log.Println("cropped", bounds.Min.Y, bounds.Max.Y)
+  crop := img.SubImage(bounds)
+  return crop
 }
 
 func splitImageCutline(workDir string, lineBoxes []BoxLine,
@@ -700,12 +702,13 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
           &image.Uniform{white}, image.Point{0,0}, draw.Src)
       }
     }
+    cutImg := cropImg(subImg)
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)
     } else {
       defer fo.Close()
-      if err := png.Encode(fo, subImg); err != nil {
+      if err := png.Encode(fo, cutImg); err != nil {
         log.Println(err)
       }
     }

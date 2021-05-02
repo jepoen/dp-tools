@@ -87,6 +87,10 @@ type summary_t struct {
   replacements map[string]wordcount_t
 }
 
+const (
+  LINE_BORDER = 20 // maximal space above below linebox relative to its height
+)
+
 var summary summary_t
 
 func str2map(s string) map[rune]bool {
@@ -664,6 +668,12 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
     lineBbox := line.boxes.boundingBox()
     y1 := lineBbox.y1 // upper border
     y0 := lineBbox.y0 // lower border
+    h := y1 - y0 // height
+    y1max := y1 + (LINE_BORDER * h)/100
+    y0min := y0 - (LINE_BORDER * h)/100
+    //log.Println(boxes2text(line.boxes))
+    //log.Printf("line y0: %d y1: %d h: %d, y0min: %d y1max: %d\n",
+    //  y0, y1, h, y0min, y1max)
     if i > 0 {
       bbcl := cutLines[i-1].boundingBox()
       y1 = bbcl.y1
@@ -671,6 +681,13 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
     if i < len(cutLines) {
       bbcl := cutLines[i].boundingBox()
       y0 = bbcl.y0
+    }
+    // restrict line height
+    if y1 > y1max {
+      y1 = y1max
+    }
+    if y0 < y0min {
+      y0 = y0min
     }
     //log.Printf("Line %d, size %d %d %d %d (%s)\n", i, lineBbox.x0, y0,
     //  lineBbox.x1, y1, boxes2text(line.boxes))
@@ -684,6 +701,7 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
     by1 := y1
     if i > 0 {
       for k := 0; k < len(cutLines[i-1]); k += 2 {
+        // upper border
         p0 := cutLines[i-1][k]
         p1 := cutLines[i-1][k+1]
         //log.Println("gray", p0, p1, bx0, by1)
@@ -694,6 +712,7 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
     }
     if i < len(cutLines) {
       for k := 0; k < len(cutLines[i]); k += 2 {
+        // lower border
         p0 := cutLines[i][k]
         p1 := cutLines[i][k+1]
         //log.Println("gray", p0, p1, bx0, by1)

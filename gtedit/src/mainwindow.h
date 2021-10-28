@@ -4,6 +4,7 @@
 #include <QList>
 #include <QMainWindow>
 #include "pattern.h"
+#include "settings.h"
 
 class QAction;
 class QActionGroup;
@@ -18,6 +19,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 private:
     QAction *openAction;
+    QAction *selectFontAction;
+    QAction *saveSettingsAction;
     QAction *quitAction;
     QAction *scale100Action;
     QAction *scale50Action;
@@ -29,7 +32,7 @@ private:
     Pattern *myDict;
     QList<LineEdit*> myLineEdits;
     QString myDir;
-    double myScale;
+    Settings mySettings;
 
     void createActions();
     void createMenus();
@@ -37,6 +40,8 @@ private:
     void createStatusBar();
     void showPage(const QString& dirName);
     void readDict();
+    void readSettings();
+    void selectFont();
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -47,5 +52,6 @@ private slots:
     void getCurrentChar();
     void countGtLines();
     void setScale();
+    void saveSettings();
 };
 #endif // MAINWINDOW_H

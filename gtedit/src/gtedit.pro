@@ -20,13 +20,15 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     mylineedit.cpp \
-    pattern.cpp
+    pattern.cpp \
+    settings.cpp
 
 HEADERS += \
     lineedit.h \
     mainwindow.h \
     mylineedit.h \
-    pattern.h
+    pattern.h \
+    settings.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

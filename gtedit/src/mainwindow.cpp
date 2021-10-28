@@ -8,8 +8,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     readDict();
+    readSettings();
     myDir = QDir(".").absolutePath();
-    myScale = 1.0;
     createActions();
     createMenus();
     createMainWidget();
@@ -25,6 +25,10 @@ void MainWindow::createActions() {
     openAction = new QAction(tr("Open page"), this);
     openAction->setShortcut(QKeySequence::Open);
     connect(openAction, SIGNAL(triggered()), this, SLOT(openPage()));
+    saveSettingsAction = new QAction(tr("Save settings"), this);
+    connect(saveSettingsAction, &QAction::triggered, this, &MainWindow::saveSettings);
+    selectFontAction = new QAction(tr("Select font …"), this);
+    connect(selectFontAction, &QAction::triggered, this, &MainWindow::selectFont);
     quitAction = new QAction(tr("Quit"), this);
     quitAction->setShortcut(QKeySequence::Quit);
     connect(quitAction, &QAction::triggered, this, &QApplication::quit);
@@ -41,6 +45,8 @@ void MainWindow::createActions() {
 void MainWindow::createMenus() {
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(openAction);
+    fileMenu->addAction(selectFontAction);
+    fileMenu->addAction(saveSettingsAction);
     fileMenu->addAction(quitAction);
     QMenu *viewMenu = menuBar()->addMenu(("&View"));
     viewMenu->addAction(scale50Action);
@@ -77,14 +83,14 @@ void MainWindow::showPage(const QString& dirName) {
     }
     widget = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout();
-    QFont font("DPSansMono", 14);
+    QFont font(mySettings.fontName(), mySettings.fontSize());
     QDir dir = QDir(dirName);
     QStringList fileNames = dir.entryList(QStringList()<<"l-???.png", QDir::Files, QDir::Name);
 
     for (QString f: fileNames) {
         LineEdit *le = new LineEdit(dir, f, myDict);
         le->setFont(font);
-        le->setScale(myScale);
+        le->setScale(mySettings.pixelScale());
         layout->addWidget(le);
         myLineEdits.append(le);
         connect(le->editor(), SIGNAL(cursorPositionChanged()), this, SLOT(getCurrentChar()));
@@ -139,9 +145,9 @@ void MainWindow::countGtLines() {
 void MainWindow::setScale() {
     QAction *action = qobject_cast<QAction *>(sender());
     if (action == nullptr) return;
-    myScale = action->data().toInt()*0.01;
+    mySettings.setPixelScale(action->data().toInt()*0.01);
     for(LineEdit *ed: myLineEdits) {
-        ed->setScale(myScale);
+        ed->setScale(mySettings.pixelScale());
     }
 }
 
@@ -181,4 +187,34 @@ void MainWindow::readDict() {
     myDict = new Pattern(words, gaps, endGaps);
     qDebug()<<"dictionary: "<<myDict->wordSize()<<" "<<myDict->gapSize();
     myDict->showGaps();
+}
+
+void MainWindow::selectFont() {
+    bool ok;
+    QFont font = QFontDialog::getFont(
+                &ok,
+                QFont(mySettings.fontName(), mySettings.fontSize()),
+                this
+    );
+    if (ok) {
+        mySettings.setFontName(font.family());
+        mySettings.setFontSize(font.pointSize());
+    }
+}
+
+void MainWindow::readSettings() {
+    QSettings settings("dp-tools", "gtedit");
+    double pixelScale = settings.value("pixelScale", "1.0").toDouble();
+    QString fontName = settings.value("fontName", "DP Sans Mono").toString();
+    int fontSize = settings.value("fontSize", "14").toInt();
+    mySettings.setPixelScale(pixelScale);
+    mySettings.setFontName(fontName);
+    mySettings.setFontSize(fontSize);
+}
+
+void MainWindow::saveSettings() {
+    QSettings settings("dp-tools", "gtedit");
+    settings.setValue("pixelScale", mySettings.pixelScale());
+    settings.setValue("fontName", mySettings.fontName());
+    settings.setValue("fontSize", mySettings.fontSize());
 }

@@ -111,7 +111,7 @@ void MainWindow::openPage() {
     QString dir = QFileDialog::getExistingDirectory(this, tr("line directory"), myDir);
     if (!dir.isEmpty()) {
         myDir = dir;
-        showPage(dir);
+        showPage(myDir);
     }
 }
 

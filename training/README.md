@@ -33,6 +33,7 @@ Weitere mögliche Datenquellen:
 * Pflanzen-Atlas zu Seb. Kneipp's »Waser-Kur«. 1893.
 * Kästner: Vom Reisen und Reisen lassen. 1910.
 * Lindworsky: Experimentelle Psychologie. 1923.
+* Führer durch das Österreichische Museum für Kunst und Industrie. 1914.
 
 ## Installation für Training mit Calamari
 

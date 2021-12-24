@@ -16,6 +16,9 @@ public:
     bool containsWord(const QString& word) const {
         return myWords.contains(word);
     }
+    /// transforms ſ before comparing with dictionary
+    bool containsTrWord(QString word) const;
+
     bool containsGap(const QString& gap) const {
         return myGaps.contains(gap);
     }

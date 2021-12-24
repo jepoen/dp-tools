@@ -44,7 +44,7 @@ void MyHighlighter::highlightPart(const QString &text, int partType, int start, 
     qDebug()<<"highlightPart"<<part<<text;
     switch (partType) {
     case T_LETTER:
-        if (!myDict->containsWord(part)) {
+        if (!myDict->containsTrWord(part)) {
             setFormat(start, len, wrongWordFormat);
         }
         return;

@@ -7,3 +7,9 @@ void Pattern::showGaps() const {
         qDebug()<<QString("[%1]").arg(gap);
     }
 }
+
+bool Pattern::containsTrWord(QString word) const {
+    QString repl = word.replace(QChar(0x17f), QChar('s'));
+    //qDebug()<<"containsTrWord"<<word<<repl;
+    return myWords.contains(repl);
+}

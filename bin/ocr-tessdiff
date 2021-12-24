@@ -52,6 +52,10 @@ def cleanCalamari(txt):
   txt = txt.replace('\'\'', '«')
   return txt
 
+def cleanTesseract(txt):
+  txt = txt.replace('ſ', 's')
+  return txt
+
 def removeDoubles(l):
   last = None
   for i in range(len(l)):
@@ -156,6 +160,7 @@ def diff(workDir):
         calamariText = cleanCalamari(calamariText)
       with open(tessFileName) as fi:
         tessText = fi.read()
+        tessText = cleanTesseract(tessText)
       lineCnt += 1
       if tessText != calamariText:
         print(os.path.join(path, fileName))

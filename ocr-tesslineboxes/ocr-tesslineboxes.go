@@ -735,12 +735,12 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
           &image.Uniform{white}, image.Point{0,0}, draw.Src)
       }
     }
-    log.Println("before cropImg", subImg.Bounds())
+    //log.Println("before cropImg", subImg.Bounds())
     cutImg := cropImg(subImg)
     if isEmptyImg(cutImg) {
       cutImg = createEmptyImg()
     }
-    log.Println("after cropImg", subImg.Bounds())
+    //log.Println("after cropImg", subImg.Bounds())
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)

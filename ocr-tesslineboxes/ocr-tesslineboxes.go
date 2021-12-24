@@ -591,6 +591,9 @@ func splitImageBboxes(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
         yy1-box.y1, yy1-lineBboxes[jn].y0)
     }
     cutImg := cropImg(subImg)
+    if isEmptyImg(cutImg) {
+      cutImg = createEmptyImg()
+    }
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)
@@ -630,6 +633,17 @@ func imgWhiteLine(img *image.Gray, y int) bool {
     }
   }
   return true
+}
+
+func isEmptyImg(img image.Image) bool {
+  bb := img.Bounds()
+  return bb.Max.X <= bb.Min.X || bb.Max.Y <= bb.Min.Y
+}
+
+func createEmptyImg() image.Image {
+  img := image.NewGray(image.Rect(0, 0, 1, 1))
+  img.Set(0, 0, color.Gray{255})
+  return img
 }
 
 func cropImg(img *image.Gray) image.Image {
@@ -721,7 +735,12 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
           &image.Uniform{white}, image.Point{0,0}, draw.Src)
       }
     }
+    log.Println("before cropImg", subImg.Bounds())
     cutImg := cropImg(subImg)
+    if isEmptyImg(cutImg) {
+      cutImg = createEmptyImg()
+    }
+    log.Println("after cropImg", subImg.Bounds())
     subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)

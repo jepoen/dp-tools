@@ -54,6 +54,8 @@ def cleanCalamari(txt):
 
 def cleanTesseract(txt):
   txt = txt.replace('ſ', 's')
+  txt = txt.replace('„', '»')
+  txt = txt.replace('“', '«')
   return txt
 
 def removeDoubles(l):

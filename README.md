@@ -58,7 +58,7 @@ python topng.py tifDir pngDir [scale]
 ```
 ## Calamari-venv
 
-* Anaconda installieren
+* Miniconda installieren
 * Dann:
 
 ```shell
@@ -70,12 +70,18 @@ conda install tensorflow-gpu=2.0
 pip install calamari_ocr
 ```
 
+* oder (lt. Doku, ungetestet):
+```
+conda create -n calamari-env --file conda-calamari-req.txt
+```
+
 ## Calamari-OCR
 
 Vorgehen:
 
 * Seiten in 300-dpi-PNG mit Tiefe 1 umwandeln
-* Seite in Zeilen segmentieren (Kraken oder `tesseract lstmbox`)
+* Seite in Zeilen segmentieren (Kraken oder `tesseract lstmbox`),
+  besser Zeichenboxen erzeugen und diese zusammensetzen (`ocr-tesslineboxes`)
 * Zeilen mit `calamari predict` erkennen
 * Zeilen zusammensetzen, Absatzheuristik über JSON-Boxfile
 * Postprocessing: Abteilungen zusammenziehen, Zeichen ersetzen

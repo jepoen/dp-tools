@@ -206,6 +206,8 @@ def run():
     args['out'] = 'diff.html'
   res = diff(args['workdir'])
   buildPage(args['out'], res)
+  print('total lines: {}, lines with differences: {}, total differences: {}'.format(
+    res['lines'], res['errLines'], res['sumdiff']))
 
 if __name__ == '__main__':
   run()

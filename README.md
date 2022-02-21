@@ -75,6 +75,14 @@ pip install calamari_ocr
 conda create -n calamari-env --file conda-calamari-req.txt
 ```
 
+Für Version 2.x:
+
+```shell
+conda install python=3.8
+conda install cudnn=8
+pip install tensorflow-gpu=2.4.4 # conda-Version funktioniert nicht
+```
+
 ## Calamari-OCR
 
 Vorgehen:

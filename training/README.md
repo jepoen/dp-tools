@@ -127,8 +127,9 @@ Version 2.1:
 
 <pre>
 calamari-train \
-  --train.images mydata/fraktur/train/*.png ocropus-data/training/*.bin.png \
-  --val.images mydata/fraktur/valid/*.png ocropus-data/testing/*.bin.png \
+  --warmstart.model myModel/best.ckpt \
+  --train.images gt/train/*.png \
+  --val.images gt/valid/*.png \
   --trainer.output_dir /data/ocr-train/modelDir \
   --early_stopping.n_to_go=5 \
   --device.gpus 0 \
@@ -141,3 +142,18 @@ Vorhersage 2.1:
 calamari-predict --checkpoint /data/ocr-train/modelDir/best.ckpt \
   --data.images tmp/*/l*png --verbose false
 </pre>
+
+## Komplett neues Modell erzeugen
+
+Version 2.1:
+
+<pre>
+calamari-train \
+  --train.images mydata/fraktur/train/*.png ocropus-data/training/*.bin.png \
+  --val.images mydata/fraktur/valid/*.png ocropus-data/testing/*.bin.png \
+  --trainer.output_dir /data/ocr-train/modelDir \
+  --early_stopping.n_to_go=5 \
+  --device.gpus 0 \
+  --n_augmentations=5
+</pre>
+

@@ -113,6 +113,9 @@ kraken-join-lines.py segmentFile.json textFile.txt -d imgLinesDir
 
 * Voraussetzung: Bilder von Einzelzeilen (1 Bit Farbtiefe) +
 Ground-Truth-Textdatei mit gleichem Basisnamen
+
+Version 1.0:
+
 <pre>
 calamari-train --weights myModel/best.ckpt \
                --output_dir=improved/ \
@@ -120,4 +123,21 @@ calamari-train --weights myModel/best.ckpt \
                --validation=myValidation/*.png
 </pre>
 
+Version 2.1:
 
+<pre>
+calamari-train \
+  --train.images mydata/fraktur/train/*.png ocropus-data/training/*.bin.png \
+  --val.images mydata/fraktur/valid/*.png ocropus-data/testing/*.bin.png \
+  --trainer.output_dir /data/ocr-train/modelDir \
+  --early_stopping.n_to_go=5 \
+  --device.gpus 0 \
+  --n_augmentations=5
+</pre>
+
+Vorhersage 2.1:
+
+<pre>
+calamari-predict --checkpoint /data/ocr-train/modelDir/best.ckpt \
+  --data.images tmp/*/l*png --verbose false
+</pre>

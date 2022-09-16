@@ -175,7 +175,7 @@ def diff(workDir):
         html1, html2 = buildTexts(tessText, r1, calamariText, r2)
         #print('Tesseract:', html1)
         #print('Calamari :', html2)
-        imgFile = os.path.join(path, 'l-{}.png'.format(m.group(1)))
+        imgFile = os.path.join(path, '{}.png'.format(m.group(1)))
         entries.append({'diff': diff,
                         'tesseract': html1,
                         'calamari': html2,

@@ -23,8 +23,12 @@ def rmFiles(basedir, subdir):
 
 def copyFiles(fileList, workDir, tgtDir, prefix):
   for gtFile, imgFile in fileList:
-    newGtFile = prefix+'-'+gtFile.replace('/', '-')
-    newImgFile = prefix+'-'+imgFile.replace('/', '-')
+    _, gtTail = os.path.split(gtFile)
+    _, imgTail = os.path.split(imgFile)
+    newGtFile = prefix+'-'+gtTail
+    newImgFile = prefix+'-'+imgTail
+    #newGtFile = prefix+'-'+gtFile.replace('/', '-')
+    #newImgFile = prefix+'-'+imgFile.replace('/', '-')
     shutil.copyfile(os.path.join(workDir, gtFile), os.path.join(tgtDir, newGtFile))
     shutil.copyfile(os.path.join(workDir, imgFile), os.path.join(tgtDir, newImgFile))
 

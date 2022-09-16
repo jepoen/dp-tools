@@ -120,7 +120,7 @@ def catLines(workDir, pgNr):
   inDir = os.path.join(workDir, pgNr)
   lines = list()
   for i in range(lineCount):
-    fileName = 'l-{:03d}.pred.txt'.format(i)
+    fileName = 'p{}-l{:03d}.pred.txt'.format(pgNr, i)
     fi = open(os.path.join(inDir, fileName))
     line = fi.readline()
     lines.append(line)

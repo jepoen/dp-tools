@@ -85,7 +85,7 @@ void MainWindow::showPage(const QString& dirName) {
     QVBoxLayout *layout = new QVBoxLayout();
     QFont font(mySettings.fontName(), mySettings.fontSize());
     QDir dir = QDir(dirName);
-    QStringList fileNames = dir.entryList(QStringList()<<"l-???.png", QDir::Files, QDir::Name);
+    QStringList fileNames = dir.entryList(QStringList()<<"*.png", QDir::Files, QDir::Name);
 
     for (QString f: fileNames) {
         LineEdit *le = new LineEdit(dir, f, myDict);

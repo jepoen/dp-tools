@@ -28,6 +28,7 @@ import (
   "log"
   "os"
   "path"
+  "path/filepath"
   _ "regexp"
   "sort"
   "strconv"
@@ -399,11 +400,12 @@ func writeJson(lineBoxFile, paraFile string, lineboxes []Box, m image.Image) {
   }
 }
 
-func splitText(base string, lineboxes []Box) {
+func splitText(workDir string, lineboxes []Box) {
+  _, base := filepath.Split(workDir)
   i := 0
   for _, box := range lineboxes {
     if box.isEmpty() { continue }
-    fileName := path.Join(base, fmt.Sprintf("t-%03d.txt", i))
+    fileName := path.Join(workDir, fmt.Sprintf("t-p%s-l%03d.txt", base, i))
     if fo, err := os.Create(fileName); err != nil {
       log.Println(err, fileName)
     } else {
@@ -564,8 +566,8 @@ func getCutLines(lineBoxes []BoxLine) []Points {
   return res
 }
 
-func splitImageBboxes(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
-    m image.Image) {
+func splitImageBboxes(workDir string, base string, lineBoxes []BoxLine,
+    lineBboxes []Box, m image.Image) {
   xx0 := m.Bounds().Min.X
   yy1 := m.Bounds().Max.Y
   mm := m.(*image.Gray)
@@ -594,7 +596,7 @@ func splitImageBboxes(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
     if isEmptyImg(cutImg) {
       cutImg = createEmptyImg()
     }
-    subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
+    subFileName := path.Join(workDir, fmt.Sprintf("p%s-l%03d.png", base, i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)
     } else {
@@ -667,7 +669,7 @@ func cropImg(img *image.Gray) image.Image {
   return crop
 }
 
-func splitImageCutline(workDir string, lineBoxes []BoxLine,
+func splitImageCutline(workDir string, base string, lineBoxes []BoxLine,
     m image.Image) {
   nonEmptyLines := removeEmptyBoxLines(lineBoxes)
   log.Println("cut nonempty boxes", nonEmptyLines)
@@ -741,7 +743,7 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
       cutImg = createEmptyImg()
     }
     //log.Println("after cropImg", subImg.Bounds())
-    subFileName := path.Join(workDir, fmt.Sprintf("l-%03d.png", i))
+    subFileName := path.Join(workDir, fmt.Sprintf("p%s-l%03d.png", base, i))
     if fo, err := os.Create(subFileName); err != nil {
       log.Println(err, subFileName)
     } else {
@@ -765,10 +767,11 @@ func splitImageCutline(workDir string, lineBoxes []BoxLine,
 
 func splitImage(workDir string, lineBoxes []BoxLine, lineBboxes []Box,
     m image.Image, isCutLines bool) {
+  _, base := filepath.Split(workDir)
   if isCutLines {
-    splitImageCutline(workDir, lineBoxes, m)
+    splitImageCutline(workDir, base, lineBoxes, m)
   } else {
-    splitImageBboxes(workDir, lineBoxes, lineBboxes, m)
+    splitImageBboxes(workDir, base, lineBoxes, lineBboxes, m)
   }
 }
 

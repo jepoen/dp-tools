@@ -142,7 +142,7 @@ def levenshtein(txt1, txt2):
 
 def diff(workDir):
   entries = list()
-  reNr = re.compile(r'^l-([0-9]{3}).pred.txt$')
+  reNr = re.compile(r'^(.*)\.pred.txt$')
   lineCnt = 0
   errLineCnt = 0
   sumDiff = 0

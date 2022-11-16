@@ -35,6 +35,7 @@ Weitere mögliche Datenquellen:
 * Kästner: Vom Reisen und Reisen lassen. 1910.
 * Lindworsky: Experimentelle Psychologie. 1923.
 * Führer durch das Österreichische Museum für Kunst und Industrie. 1914.
+* Ritz: Barocke Kirchen und Klöster Unterfrankens. 1927.
 
 ## Installation für Training mit Calamari
 
@@ -127,28 +128,6 @@ Version 2.1:
 
 <pre>
 calamari-train \
-  --warmstart.model myModel/best.ckpt \
-  --train.images gt/train/*.png \
-  --val.images gt/valid/*.png \
-  --trainer.output_dir /data/ocr-train/modelDir \
-  --early_stopping.n_to_go=5 \
-  --device.gpus 0 \
-  --n_augmentations=5
-</pre>
-
-Vorhersage 2.1:
-
-<pre>
-calamari-predict --checkpoint /data/ocr-train/modelDir/best.ckpt \
-  --data.images tmp/*/l*png --verbose false
-</pre>
-
-## Komplett neues Modell erzeugen
-
-Version 2.1:
-
-<pre>
-calamari-train \
   --train.images mydata/fraktur/train/*.png ocropus-data/training/*.bin.png \
   --val.images mydata/fraktur/valid/*.png ocropus-data/testing/*.bin.png \
   --trainer.output_dir /data/ocr-train/modelDir \
@@ -157,3 +136,23 @@ calamari-train \
   --n_augmentations=5
 </pre>
 
+Nachtrainieren:
+
+`````
+calamari-train \
+  --warmstart.model /data/ocr-train/modelDir/best.ckpt \
+  --train.images gt/train/*.png \
+  --val.images gt/valid/*.png \
+  --trainer.output_dir modelDir \
+  --early_stopping.n_to_go=5 \
+  --device.gpus 0 \
+  --codec.keep_loaded True \
+  --n_augmentations=5
+
+````
+Vorhersage 2.1:
+
+<pre>
+calamari-predict --checkpoint /data/ocr-train/modelDir/best.ckpt \
+  --data.images tmp/*/l*png --verbose false
+</pre>

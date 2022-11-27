@@ -138,7 +138,7 @@ calamari-train \
 
 Nachtrainieren:
 
-`````
+<pre>
 calamari-train \
   --warmstart.model /data/ocr-train/modelDir/best.ckpt \
   --train.images gt/train/*.png \
@@ -149,7 +149,8 @@ calamari-train \
   --codec.keep_loaded True \
   --n_augmentations=5
 
-````
+</pre>
+
 Vorhersage 2.1:
 
 <pre>

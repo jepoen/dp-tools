@@ -50,6 +50,8 @@ def cleanCalamari(txt):
   txt = txt.replace('ſ', 's')
   txt = txt.replace(',,', '»')
   txt = txt.replace('\'\'', '«')
+  txt = txt.replace('„', '»')
+  txt = txt.replace('“', '«')
   return txt
 
 def cleanTesseract(txt):

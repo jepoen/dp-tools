@@ -35,6 +35,7 @@ Weitere mögliche Datenquellen:
 * Kästner: Vom Reisen und Reisen lassen. 1910.
 * Lindworsky: Experimentelle Psychologie. 1923.
 * Führer durch das Österreichische Museum für Kunst und Industrie. 1914.
+* Säuberlich: Buchgewerbliches Hilfsbuch. 1921.
 * Trinkler: Quer durch Afghanistan nach Indien. 1927.
 
 ## Installation für Training mit Calamari

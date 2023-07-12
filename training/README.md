@@ -22,6 +22,7 @@ Eigene Daten:
 * Oldenbourg: Buch und Bildung. C. H. Beck. 1925
 * Clemen: Die nichtchristlichen Kulturreligionen, Teil 1 und 2. Teubner 1921.
 * Hedin: Von Pol zu Pol. Teil 2. Brockhaus 1914.
+* Rein: Auf der Heidecksburg. Greifenverlag 1926.
 
 Weitere mögliche Datenquellen:
 

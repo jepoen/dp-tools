@@ -23,6 +23,7 @@ Eigene Daten:
 * Clemen: Die nichtchristlichen Kulturreligionen, Teil 1 und 2. Teubner 1921.
 * Hedin: Von Pol zu Pol. Teil 2. Brockhaus 1914.
 * Rein: Auf der Heidecksburg. Greifenverlag 1926.
+* Wunder: Chemische Unterhaltungen. Verlag Peter Oestergaard 1915.
 
 Weitere mögliche Datenquellen:
 
@@ -38,6 +39,7 @@ Weitere mögliche Datenquellen:
 * Führer durch das Österreichische Museum für Kunst und Industrie. 1914.
 * Säuberlich: Buchgewerbliches Hilfsbuch. 1921.
 * Trinkler: Quer durch Afghanistan nach Indien. 1927.
+* Hirschfeld: Frau Rietschel das Kind. 1925. (Enthält ſ)
 
 ## Installation für Training mit Calamari
 

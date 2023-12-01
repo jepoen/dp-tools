@@ -41,108 +41,44 @@ Weitere mögliche Datenquellen:
 * Trinkler: Quer durch Afghanistan nach Indien. 1927.
 * Hirschfeld: Frau Rietschel das Kind. 1925. (Enthält ſ)
 
-## Installation für Training mit Calamari
+## Installation für Training mit Calamari2
 
-* Installation Anaconda mit `tensorflow_gpu` 2.0.0
-* Zusätzlich war Installation von `libcuda1` erforderlich
+* Installation Cuda 11.7
+* Installation Miniconda
+* Aktivierung und Downgrade auf Python 3.9: `conda install python=3.9`
+* Installation Calamari: `pip install calamari-ocr`
+
+  * Falls Pakete trotz Installation nicht gefunden werden,
+    mit pip deinstallieren und neu installieren
+  * installierte Tensorflow-Version: 2.6
 * Anaconda-Umgebung aktivieren:
-  <pre>
+
+  ~~~~
   source <condaDir>/bin/activate
-  </pre>
-* Installation von virtueller Umgebung für Calamari (falls gewünscht) und
-  aktivieren:
-  <pre>
-  conda env create -f environment_master_gpu.yml
-  conda activate ...
-  </pre>
-  Alternativ Calamari direkt in Anaconda-Umgebung installieren.
+  ~~~~
 
-## Training mit Ocropus-Daten
+## Training mit Ocropus- und eigenen Daten
 
-<pre>
-calamari-train --files ocropus-model_fraktur-master/training/*.bin.png \
-                       mydata/training/*.png \
-               --output_dir=myModel/ \
-               --validation=ocropus-model_fraktur-master/testing/*.bin.png \
-                            mydata/valid/*.png
-</pre>
-Achtung: Ocropus-Testdaten als Validation-Daten missbraucht!
+Version 2:
 
-ca. 30'000 Schritte
-
-Persönlicher Eindruck: Dieses Modell ist genauer als das mitgelieferte
-Camari-Modell (zumindest bei Verwendung ohne Voting)
-TODO: Training Voting-Modell
-
-## OCR
-
-Derzeitiger Workflow:
-
-* Vorbehandlung mit Scantailor (Ausgabe 600 dpi, 1 bit Farbtiefe)
-
-* Skalieren auf 50%
-  <pre>
-  convert -scale 50% -depth 1 srcImage tgtImage
-  </pre>
-
-* Erzeugen der Zeilenboxen
-  * kraken:
-  <pre>
-  kraken -i imageFile segmentFile segment
-  </pre>
-  
-  * Tesseract (Installation mit Trainingssupport erforderlich)
-  <pre>
-  tesseract imageFile baseFilename lstmbox
-  </pre>
-  Umwandlung der Boxfiles in JSON-File wie kraken
-
-* Vorhersage mit Calamari
-  <pre>
-  calamari-predict --checkpoint myModel/best.ckpt \
-    --files lineImageFiles
-  </pre>
-
-* Zusammensetzen der Zeilen mit Heuristik
-
-* Vergleich mit Tesseract-Vorhersage und evt. Modell anpassen
-
-
-* Zeilen zusammensetzen (eigenes Tool)
-
-<pre>
-kraken-join-lines.py segmentFile.json textFile.txt -d imgLinesDir
-</pre>
-
-## Modell anpassen
-
-* Voraussetzung: Bilder von Einzelzeilen (1 Bit Farbtiefe) +
-Ground-Truth-Textdatei mit gleichem Basisnamen
-
-Version 1.0:
-
-<pre>
-calamari-train --weights myModel/best.ckpt \
-               --output_dir=improved/ \
-               --files myTraining/*.png
-               --validation=myValidation/*.png
-</pre>
-
-Version 2.1:
-
-<pre>
+~~~~
 calamari-train \
   --train.images mydata/fraktur/train/*.png ocropus-data/training/*.bin.png \
   --val.images mydata/fraktur/valid/*.png ocropus-data/testing/*.bin.png \
   --trainer.output_dir /data/ocr-train/modelDir \
-  --early_stopping.n_to_go=5 \
+  --early_stopping.n_to_go 5 \
   --device.gpus 0 \
   --n_augmentations=5
-</pre>
+~~~~
 
 Nachtrainieren:
 
-<pre>
+* Voraussetzung: Bilder von Einzelzeilen (1 Bit Farbtiefe) +
+  Ground-Truth-Textdatei mit gleichem Basisnamen
+
+Nachtrainieren:
+
+~~~~
 calamari-train \
   --warmstart.model /data/ocr-train/modelDir/best.ckpt \
   --train.images gt/train/*.png \
@@ -152,12 +88,33 @@ calamari-train \
   --device.gpus 0 \
   --codec.keep_loaded True \
   --n_augmentations=5
+~~~~
 
-</pre>
+## OCR
 
-Vorhersage 2.1:
+Derzeitiger Workflow:
 
-<pre>
-calamari-predict --checkpoint /data/ocr-train/modelDir/best.ckpt \
-  --data.images tmp/*/l*png --verbose false
-</pre>
+* Vorbehandlung mit Scantailor (Ausgabe 600 dpi, 1 bit Farbtiefe)
+
+* Erzeugen der Zeilenboxen mit Script `ocr-convert`
+  * Herunterskalieren auf 50%
+  * Erzeugen der Zeichenboxen mit Tesseract
+  * Zusammensetzen zu Zeilenboxen
+  * Ausschneiden der Zeilen
+  * kraken:
+
+* Vorhersage mit Calamari
+
+  ~~~~
+  calamari-predict --checkpoint /data/ocr-train/modelDir/best.ckpt \
+    --data.images tmp/*/p*png --verbose False
+  ~~~~
+
+* Vergleich mit Tesseract-Vorhersage und evt. Modell anpassen
+
+* Zeilen zusammensetzen (eigenes Tool)
+
+  ~~~~
+  ocr-joinpara segmentFile.json textFile.txt -d imgLinesDir
+  ~~~~
+

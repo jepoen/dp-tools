@@ -58,6 +58,7 @@ python topng.py tifDir pngDir [scale]
 ```
 ## Calamari-venv
 
+* Cuda installieren (11.8)
 * Miniconda installieren
 * Dann:
 
@@ -65,23 +66,11 @@ python topng.py tifDir pngDir [scale]
 . .../venv/bin/activate
 conda update conda --all
 conda update anaconda
-conda install python=3.6.12
-conda install tensorflow-gpu=2.0
-pip install calamari_ocr
+conda install python=3.9
+pip install calamari-ocr
 ```
 
-* oder (lt. Doku, ungetestet):
-```
-conda create -n calamari-env --file conda-calamari-req.txt
-```
-
-Für Version 2.x:
-
-```shell
-conda install python=3.8
-conda install cudnn=8
-pip install tensorflow-gpu=2.4.4 # conda-Version funktioniert nicht
-```
+Tensorflow etc. nicht mit `conda` installieren!
 
 ## Calamari-OCR
 

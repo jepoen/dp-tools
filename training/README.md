@@ -43,7 +43,7 @@ Weitere mögliche Datenquellen:
 
 ## Installation für Training mit Calamari2
 
-* Installation Cuda 11.7
+* Installation Cuda 11.8
 * Installation Miniconda
 * Aktivierung und Downgrade auf Python 3.9: `conda install python=3.9`
 * Installation Calamari: `pip install calamari-ocr`
@@ -107,7 +107,7 @@ Derzeitiger Workflow:
 
   ~~~~
   calamari-predict --checkpoint /data/ocr-train/modelDir/best.ckpt \
-    --data.images tmp/*/p*png --verbose False
+    --data.images tmp/*/p*png --verbose False --predictor.device.gpus 0
   ~~~~
 
 * Vergleich mit Tesseract-Vorhersage und evt. Modell anpassen

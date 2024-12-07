@@ -57,6 +57,14 @@ Weitere mögliche Datenquellen:
   source <condaDir>/bin/activate
   ~~~~
 
+Für Linux-Mint 22
+
+- Tensorflow-Version < 2.16
+- Conda-Umgebung
+- Python auf 3.10: `conda install python=3.10`
+- Tensorflow 2.15: `conda install -c conda-forge tensorflow-gpu=2.15`
+- Calamari: `pip install calamari-ocr==2.3`
+
 ## Training mit Ocropus- und eigenen Daten
 
 Version 2:

@@ -9,6 +9,12 @@ fraktur book, so the rest of the documentation is provided in German.
 python setup.py install [--user]
 ~~~
 
+## Scantailor
+
+https://github.com/trufanov-nok/scantailor-universal
+
+Selbst übersetzen
+
 ## handleTess
 
 Nachbehandlung des Tesseract-Ergebnisses.

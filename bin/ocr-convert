@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse, os, subprocess
 
+TESS_DEFAULT_LANG='Fraktur'
+
 def convert(imgDir, workDir, lang, psm, scale):
   i = 0
   fo = open('pretess.sh', 'w')
@@ -42,7 +44,7 @@ def run():
     help='Scaling factor (%%)')
   parser.add_argument('--psm', '-p', default='4',
     help='Tesseract Page Segment Mode')
-  parser.add_argument('--lang', '-l', default='deu_frak',
+  parser.add_argument('--lang', '-l', default=TESS_DEFAULT_LANG,
     help='Tesseract language model')
   nargs = parser.parse_args()
   args = vars(nargs)

@@ -3,6 +3,12 @@
 Simple tools for content providing (CP) on pgdp.net, especially for German
 fraktur book, so the rest of the documentation is provided in German.
 
+## Install python tools
+
+~~~
+python setup.py install [--user]
+~~~
+
 ## handleTess
 
 Nachbehandlung des Tesseract-Ergebnisses.
